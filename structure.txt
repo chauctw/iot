@@ -1,1 +1,62 @@
-﻿
+﻿|-- config
+|   |-- db.js
+|-- controllers
+|   |-- kpi.controller.js
+|   |-- overview.controller.js
+|   |-- station.controller.js
+|   |-- user.controller.js
+|-- gateways
+|   |-- http_gateway.js
+|   |-- mqtt_gateway.js
+|   |-- telegram.js
+|-- public
+|   |-- css
+|   |   |-- layout.css
+|   |-- images
+|   |   |-- DIS.gif
+|   |   |-- logo.png
+|   |   |-- PS_GR.gif
+|   |-- pages
+|   |   |-- logger-map.html
+|   |   |-- overview.html
+|   |   |-- statistics.html
+|   |   |-- system-config.html
+|   |   |-- user-config.html
+|   |   |-- water-quality.html
+|   |-- shared
+|   |   |-- gauge.css
+|   |   |-- gauge.js
+|   |   |-- layout copy.css
+|   |   |-- layout copy.html
+|   |   |-- layout copy.js
+|   |   |-- layout.css
+|   |   |-- layout.html
+|   |   |-- layout.js
+|   |   |-- nav.js
+|   |   |-- ws-client.js
+|   |-- index.html
+|   |-- layout.html
+|   |-- login.html
+|-- routes
+|   |-- alert.route.js
+|   |-- kpi.route.js
+|   |-- overview.route.js
+|   |-- station.route.js
+|   |-- user.route.js
+|-- services
+|   |-- .gitignore
+|   |-- alert_engine.js
+|   |-- fetchmonre.js
+|   |-- fetchmqtt.js
+|   |-- fetchscada.js
+|   |-- fetchtva.js
+|-- .env
+|-- app.js
+|-- get_attributes.js
+|-- hash.js
+|-- init.js
+|-- package-lock.json
+|-- package.json
+|-- README.md
+|-- schema.sql
+|-- structure.txt
