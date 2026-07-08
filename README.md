@@ -115,3 +115,16 @@ scada_gs4nm2
 
 
 FlyV1 fm2_lJPECAAAAAAAFf43xBDqEeyBjZshW+Ah2MqaHihQwrVodHRwczovL2FwaS5mbHkuaW8vdjGUAJLOABr/lR8Lk7lodHRwczovL2FwaS5mbHkuaW8vYWFhL3YxxDxKYM/AUTfjfTm35D7lYRjGPgPn+/PhVRHBIRjBLxq0y+1Cewen+Quu9iMkWNhJtNO2Fp2dZI4+LOTkUMrETnLlS3LgTXlLItlVvuAzNolu8k5Cezq6Ka1+exABTCKBSUBq6PxAIDIqQBy0wORhutGTPsQt2js+7LsS2AQlai5J2kLEtvnzwJ8ImbelNsQgbn+5qv1XkldT31LdQBMqivdcqhME/xg106NvsjJtmM4=,fm2_lJPETnLlS3LgTXlLItlVvuAzNolu8k5Cezq6Ka1+exABTCKBSUBq6PxAIDIqQBy0wORhutGTPsQt2js+7LsS2AQlai5J2kLEtvnzwJ8ImbelNsQQQRQIg2DfeNPJDaSnh6t5SMO5aHR0cHM6Ly9hcGkuZmx5LmlvL2FhYS92MZgEks5qTj4hzwAAAAEmRlw/F84AGdhpCpHOABnYaQzEEAIUA14wQAYHUEtzBC8qiDbEIHAU5kGm0wFNGPR3rJ5iEVfNjeEKImHxQVBaUQkxE4yp
+
+
+
+
+-- 1. Tạo một dãy số tự động tăng (Sequence) mới cho bảng nếu chưa có
+CREATE SEQUENCE IF NOT EXISTS alert_thresholds_id_seq;
+
+-- 2. Ép cột "id" nhận giá trị tăng dần mặc định khi lệnh INSERT không truyền id vào
+ALTER TABLE alert_thresholds 
+ALTER COLUMN id SET DEFAULT nextval('alert_thresholds_id_seq');
+
+-- 3. Đồng bộ lại giá trị hiện tại của dãy số trùng với số lớn nhất hiện tại trong bảng (tránh lỗi trùng id)
+SELECT setval('alert_thresholds_id_seq', COALESCE(MAX(id), 1)) FROM alert_thresholds;
