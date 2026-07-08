@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Giám sát IoT & KPI Nhà máy Nước</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/shared/gauge.css">
+    <script src="/shared/gauge.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <img src="/images/logo.png" alt="Logo Công ty" class="brand-logo-img">
+                <span class="brand-text">CAWACO</span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="#" data-page="overview" class="menu-item active">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+                <a href="#" data-page="logger-map" class="menu-item">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    <span class="menu-text">Bản đồ Logger</span>
+                </a>
+                <!-- <a href="#" data-page="water-quality" class="menu-item">
+                    <i class="fa-solid fa-droplet-slash"></i>
+                    <span class="menu-text">Chất lượng nước</span>
+                </a> -->
+                <a href="#" data-page="statistics" class="menu-item">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span class="menu-text">Thống kê</span>
+                </a>
+                <a href="#" data-page="system-config" class="menu-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span class="menu-text">Cài đặt</span>
+                </a>
+
+                <a href="#" data-page="user-config" class="menu-item">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span class="menu-text">Quản lý người dùng</span>
+                </a>
+            </nav>
+
+            <!-- <div class="sidebar-footer">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span class="menu-text">Hệ thống: v1.0.0</span>
+            </div> -->
+        </aside>
+
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+        <div class="main-wrapper">
+            
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="toggle-sidebar-btn" id="toggleSidebar">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h2 class="page-title" id="pageTitle">Dashboard</h2>
+                </div>
+                
+                <div class="header-right">
+                    <div class="system-timezone">
+                        <i class="fa-solid fa-earth-asia"></i> 
+                        <span id="systemClock">Đang tải thời gian...</span>
+                    </div>
+                    <div class="user-profile" style="cursor: pointer;" onclick="logoutApp()">
+                        <div class="avatar"><i class="fa-solid fa-user-gear"></i></div>
+                        <span class="username" id="topNavFullName">Đang nạp...</span>
+                        <i class="fa-solid fa-right-from-bracket" style="margin-left: 5px; color:#94a3b8;"></i>
+                    </div>
+
+                    <script>
+                    // Thêm đoạn xử lý nạp thông tin này vào bên trong thẻ script có sẵn của file layout.html
+                    window.currentUserRole = null;
+                    window.userProfilePromise = fetch('/api/users/me').then(r => r.json()).then(data => {
+                        if(data.loggedIn) {
+                            window.currentUserRole = data.user.role;
+                            document.getElementById('topNavFullName').innerText = `${data.user.full_name} (${data.user.role})`;
+
+                            const restrictedPages = new Set(['system-config', 'user-config']);
+                            if (data.user.role === 'Operator') {
+                                document.querySelectorAll('.menu-item').forEach(item => {
+                                    if (restrictedPages.has(item.getAttribute('data-page'))) {
+                                        item.style.display = 'none';
+                                    }
+                                });
+                            }
+                        } else {
+                            window.location.href = '/login';
+                        }
+                    });
+
+                    async function logoutApp() {
+                        // 1. Hiển thị thông báo Toast mượt mà
+                        window.alert("Đang đăng xuất khỏi hệ thống CAWACO...");
+                        
+                        // 2. 🌟 QUAN TRỌNG: Xóa bỏ vết trang cũ đã lưu trong bộ nhớ trình duyệt
+                        localStorage.removeItem("active-page-route");
+                        localStorage.removeItem("active-page-title");
+
+                        // Nếu muốn xóa sạch toàn bộ cấu hình khác bao gồm cả trạng thái đóng/mở sidebar, hãy dùng:
+                        // localStorage.clear();
+
+                        // 3. Đợi hiệu ứng Toast hiển thị rồi thực hiện chuyển hướng về màn hình Login
+                        setTimeout(async () => {
+                            try {
+                                await fetch('/api/users/logout', { method: 'POST' });
+                                window.location.href = '/login';
+                            } catch (err) {
+                                console.error("Lỗi đăng xuất:", err);
+                                window.location.href = '/login'; // Vẫn chuyển hướng nếu API lỗi
+                            }
+                        }, 500);
+                    }
+                    </script>
+                </div>
+            </header>
+
+            <main class="main-content" id="mainContent">
+                <div class="loading-spinner">Đang tải phân hệ...</div>
+            </main>
+            
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const toggleBtn = document.getElementById("toggleSidebar");
+            const sidebar = document.getElementById("sidebar");
+            const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+            const menuItems = document.querySelectorAll(".menu-item");
+            const mainContent = document.getElementById("mainContent");
+            const pageTitle = document.getElementById("pageTitle");
+            const isMobileViewport = () => window.matchMedia("(max-width: 768px)").matches;
+            const restrictedPages = new Set(['system-config', 'user-config']);
+
+            const getVisibleMenuItems = () => Array.from(menuItems).filter(item => item.style.display !== 'none');
+
+            const hasAccessToPage = (pageName) => {
+                if (window.currentUserRole !== 'Operator') return true;
+                return !restrictedPages.has(pageName);
+            };
+
+            const getFallbackPage = () => {
+                const visibleItem = getVisibleMenuItems().find(item => item.getAttribute('data-page') === 'overview')
+                    || getVisibleMenuItems()[0];
+                return visibleItem ? visibleItem.getAttribute('data-page') : 'overview';
+            };
+
+            const syncSidebarState = () => {
+                if (isMobileViewport()) {
+                    sidebar.classList.remove("collapsed");
+                    document.body.classList.remove("sidebar-open");
+                } else {
+                    document.body.classList.remove("sidebar-open");
+                    if (localStorage.getItem("sidebar-collapsed") === "true") {
+                        sidebar.classList.add("collapsed");
+                    } else {
+                        sidebar.classList.remove("collapsed");
+                    }
+                }
+            };
+
+            // 1. Quản lý Đóng / Mở Sidebar
+            syncSidebarState();
+            toggleBtn.addEventListener("click", () => {
+                if (isMobileViewport()) {
+                    document.body.classList.toggle("sidebar-open");
+                    return;
+                }
+
+                sidebar.classList.toggle("collapsed");
+                localStorage.setItem("sidebar-collapsed", sidebar.classList.contains("collapsed"));
+            });
+
+            if (sidebarBackdrop) {
+                sidebarBackdrop.addEventListener("click", () => {
+                    document.body.classList.remove("sidebar-open");
+                });
+            }
+
+            window.addEventListener("resize", syncSidebarState);
+
+            // 2. Hàm CORE nạp động nội dung HTML từ thư mục /pages/
+            // 2. Hàm CORE nạp động nội dung HTML từ thư mục /pages/
+            async function loadPage(pageName, pageText) {
+                if (!hasAccessToPage(pageName)) {
+                    const fallbackPage = getFallbackPage();
+                    const fallbackItem = document.querySelector(`.menu-item[data-page="${fallbackPage}"]`);
+                    const fallbackTitle = fallbackItem ? fallbackItem.querySelector('.menu-text').innerText : 'Dashboard';
+                    if (pageName !== fallbackPage) {
+                        return loadPage(fallbackPage, fallbackTitle);
+                    }
+                }
+
+                mainContent.innerHTML = `<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Đang kết nối dữ liệu phân hệ...</div>`;
+                mainContent.scrollTop = 0;
+                
+                try {
+                    const response = await fetch(`/pages/${pageName}.html`);
+                    if (!response.ok) throw new Error("Không thể tải trang mục tiêu.");
+                    
+                    // 🟢 ĐÃ SỬA: Phải đọc text() trước rồi mới gán và thực thi Script
+                    const htmlContent = await response.text();
+                    mainContent.innerHTML = htmlContent;
+                    mainContent.classList.remove('page-fade-active');
+                    void mainContent.offsetWidth; 
+                    mainContent.classList.add('page-fade-active');
+                    
+                    // Trích xuất và ép trình duyệt thực thi lại toàn bộ thẻ script có trong trang con
+                    const scripts = mainContent.querySelectorAll("script");
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement("script");
+                        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    });
+                    
+                    // Cập nhật tiêu đề trên thanh Header cho khớp với trang hiện tại
+                    pageTitle.innerText = pageText;
+                    
+                    // Lưu lại lịch sử trang cuối cùng người dùng xem để khi F5 không bị quay về trang đầu
+                    localStorage.setItem("active-page-route", pageName);
+                    localStorage.setItem("active-page-title", pageText);
+                } catch (error) {
+                    mainContent.innerHTML = `
+                        <div class="page-card" style="border-color: #fca5a5; background: #fef2f2; flex: 1; width: 100%;">
+                            <h3 style="color: #dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Lỗi tải phân hệ</h3>
+                            <p style="color: #991b1b;">Chi tiết: ${error.message}. Vui lòng kiểm tra lại file trong thư mục public/pages/.</p>
+                        </div>`;
+                }
+            }
+            // 3. Sự kiện Click chuyển trang của Menu Sidebar
+            menuItems.forEach(item => {
+                item.addEventListener("click", (e) => {
+                    e.preventDefault(); // Chặn hành vi nhảy trang tải lại toàn bộ của thẻ a
+                    
+                    // Đổi class Active sáng đèn menu
+                    menuItems.forEach(i => i.classList.remove("active"));
+                    item.classList.add("active");
+                    
+                    // Đọc thuộc tính để lấy tên trang và tiến hành load
+                    const pageName = item.getAttribute("data-page");
+                    const pageText = item.querySelector(".menu-text").innerText;
+
+                    if (!hasAccessToPage(pageName)) {
+                        return;
+                    }
+                    
+                    loadPage(pageName, pageText);
+
+                    if (isMobileViewport()) {
+                        document.body.classList.remove("sidebar-open");
+                    }
+                });
+            });
+
+            // 4. Khởi tạo: Tự động khôi phục lại trang cuối cùng trước khi F5 hoặc load mặc định trang đầu
+            const initializeLayout = async () => {
+                await (window.userProfilePromise || Promise.resolve());
+
+                const savedPage = localStorage.getItem("active-page-route") || "overview";
+                const savedTitle = localStorage.getItem("active-page-title") || "Dashboard";
+                const initialPage = hasAccessToPage(savedPage) ? savedPage : getFallbackPage();
+                const initialItem = document.querySelector(`.menu-item[data-page="${initialPage}"]`);
+                const initialTitle = initialItem ? initialItem.querySelector('.menu-text').innerText : savedTitle;
+
+                // Tìm đúng item menu đã lưu để sáng đèn lên
+                menuItems.forEach(i => {
+                    if(i.getAttribute("data-page") === initialPage) {
+                        i.classList.add("active");
+                    } else {
+                        i.classList.remove("active");
+                    }
+                });
+
+                // Tiến hành kích hoạt nạp mồi trang ban đầu
+                loadPage(initialPage, initialTitle);
+            };
+
+            initializeLayout();
+        });
+    </script>
+
+    <div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px;"></div>
+    <style>
+        /* Hiệu ứng Toast mượt mà */
+        .custom-toast {
+            background: #1e293b; color: white; padding: 12px 24px; border-radius: 0px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: sans-serif; font-size: 14px;
+            display: flex; align-items: center; gap: 10px; border-left: 4px solid #0ea5e9;
+            animation: toastIn 0.3s ease forwards, toastOut 0.3s ease 3s forwards;
+        }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+
+        /* Hiệu ứng click Ripple (Sóng nước) */
+        .ripple-effect {
+            position: absolute; background: rgba(14, 165, 233, 0.4); border-radius: 50%;
+            transform: scale(0); animation: ripple-animation 0.5s linear; pointer-events: none;
+        }
+        @keyframes ripple-animation { to { transform: scale(4); opacity: 0; } }
+
+        /* Định dạng tăng cường hiệu ứng chuyển trang cho main-content */
+        .main-content {
+            position: relative;
+        }
+        .page-fade-active {
+            animation: pageFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes pageFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
+    <script>
+        // 1. ẨN TOÀN BỘ POPUP TRÌNH DUYỆT: Ghi đè hàm alert() truyền thống
+        window.alert = function(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'custom-toast';
+            
+            // Tự động đổi màu viền nếu thông báo chứa từ khóa lỗi
+            if(message.toLowerCase().includes('lỗi') || message.toLowerCase().includes('thất bại') || message.toLowerCase().includes('từ chối')) {
+                toast.style.borderLeftColor = '#dc2626';
+            } else if (message.toLowerCase().includes('thành công')) {
+                toast.style.borderLeftColor = '#16a34a';
+            }
+
+            toast.innerHTML = `<i class="fa-solid fa-bell"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3300);
+        };
+
+        // 2. TẠO HIỆU ỨNG CHO TOÀN BỘ CLICK (Ripple Effect)
+        document.addEventListener('click', function(e) {
+            // Áp dụng cho các thành phần là button, thẻ a, hoặc menu item
+            const target = e.target.closest('button, .menu-item, a, .btn');
+            if (!target) return;
+
+            // Đảm bảo phần tử có vị trí relative để chứa hiệu ứng
+            if (getComputedStyle(target).position === 'static') {
+                target.style.position = 'relative';
+            }
+            target.style.overflow = 'hidden';
+
+            const rect = target.getBoundingClientRect();
+            const ripple = document.createElement('span');
+            ripple.className = 'ripple-effect';
+            
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = `${size}px`;
+            ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+            ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+
+            target.appendChild(ripple);
+            ripple.addEventListener('animationend', () => ripple.remove());
+        });
+
+        function startSystemClock() {
+            const clockElement = document.getElementById('systemClock');
+            if (!clockElement) return;
+
+            function updateClock() {
+                const now = new Date();
+                
+                // Trích xuất giờ, phút, giây và đệm thêm số 0 nếu < 10
+                const hh = String(now.getHours()).padStart(2, '0');
+                const mm = String(now.getMinutes()).padStart(2, '0');
+                const ss = String(now.getSeconds()).padStart(2, '0');
+                
+                // Trích xuất ngày, tháng, năm và đệm thêm số 0 nếu < 10
+                const DD = String(now.getDate()).padStart(2, '0');
+                const MM = String(now.getMonth() + 1).padStart(2, '0'); // Tháng trong JS chạy từ 0-11
+                const YYYY = now.getFullYear();
+                
+                // Ghép chuỗi theo đúng định dạng yêu cầu hh:mm:ss - DD/MM/YYYY
+                clockElement.innerHTML = `${hh}:${mm}:${ss} - ${DD}/${MM}/${YYYY}`;
+            }
+
+            // Chạy mồi ngay lập tức khi vừa nạp trang để không bị trễ 1 giây ban đầu
+            updateClock(); 
+            
+            // Cứ mỗi 1000ms (1 giây) cập nhật lại đồng hồ một lần
+            setInterval(updateClock, 1000);
+        }
+
+        // Kích hoạt chạy đồng hồ ngay khi DOM sẵn sàng
+        document.addEventListener("DOMContentLoaded", () => {
+            startSystemClock();
+        });
+    </script>
+</body>
+</html>

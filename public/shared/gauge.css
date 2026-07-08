@@ -1,0 +1,99 @@
+/* ==========================================================================
+   ScadaGauge - stylesheet
+   Đi kèm với ScadaGauge.js — style cho gauge SCADA dạng vòng cung (arc gauge)
+   ========================================================================== */
+
+.scada-gauge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;  
+}
+
+.scada-gauge * {
+  box-sizing: border-box;
+}
+
+.scada-gauge-container {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 230 / 260;
+}
+
+.scada-gauge-container svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+/* Vòng tiến trình (progress arc) - màu được JS set động qua style.stroke/style.color
+   theo colorMode ("zones" hoặc "gradient"); currentColor giúp glow tự bám theo màu đó */
+.scada-gauge .gauge-progress {
+  filter: drop-shadow(0 0 5px currentColor);
+  transition: stroke-dasharray 0.5s ease-out, stroke 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+/* Kim đồng hồ (needle) - đầu kim & trục kim đổi màu theo giá trị (fill do JS set) */
+.scada-gauge .gauge-needle {
+  transform-origin: 150px 175px;
+  transition: transform 0.5s ease-out;
+}
+
+.scada-gauge .gauge-needle-tip,
+.scada-gauge .gauge-needle-hub {
+  transition: fill 0.3s ease-in-out;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* Giá trị hiển thị ở giữa gauge - màu chữ đổi theo giá trị (fill do JS set) */
+.scada-gauge .gauge-value {
+  font-variant-numeric: tabular-nums;
+  transition: fill 0.3s ease-in-out;
+}
+
+/* ==========================================================================
+   Biến thể kích thước (tuỳ chọn dùng thêm class)
+   ========================================================================== */
+
+.scada-gauge--sm .scada-gauge-container {
+  max-width: 160px;
+}
+
+.scada-gauge--lg .scada-gauge-container {
+  max-width: 360px;
+}
+
+/* ==========================================================================
+   Trạng thái cảnh báo (tuỳ chọn: thêm class vào #containerId cha)
+   Ví dụ dùng JS: container.classList.add('is-warning')
+   ========================================================================== */
+
+.scada-gauge.is-warning .gauge-progress {
+  stroke: #FFC107 !important;
+}
+
+.scada-gauge.is-danger .gauge-progress {
+  stroke: #F44336 !important;
+}
+
+.scada-gauge.is-warning .gauge-value {
+  fill: #FFC107 !important;
+}
+
+.scada-gauge.is-danger .gauge-value {
+  fill: #F44336 !important;
+}
+
+/* ==========================================================================
+   Responsive: thu nhỏ trên màn hình nhỏ
+   ========================================================================== */
+
+@media (max-width: 480px) {
+  .scada-gauge-container {
+    max-width: 180px;
+  }
+}

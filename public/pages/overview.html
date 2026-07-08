@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Giám Sát Tổng Quan KPI</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../shared/gauge.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../shared/gauge.js"></script>
+    
+    <style>
+        :root {
+            --page-bg: #f1f5f9;
+            --surface: #ffffff;
+            --surface-strong: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border-color: rgba(15, 23, 42, 0.08);
+            --primary: #14b8a6;
+            --active: #0d9488;
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+            --space: 5px;
+        }
+
+        .overview-container {
+            width: 100%;
+            min-height: calc(100vh - 70px);
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: var(--space);
+            overflow: visible;
+            gap: var(--space);
+            background: transparent;
+        }
+
+        .header-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space);
+            background: var(--surface);
+            padding: var(--space);
+            border-radius: 0px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 0;
+            flex-wrap: wrap;
+        }
+
+        .tab-bar-container {
+            display: flex;
+            background: var(--surface-strong);
+            padding: var(--space);
+            border-radius: 0px;
+            gap: var(--space);
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 5px 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 0px;
+            transition: all 0.2s ease;
+            min-height: 40px;
+        }
+        .tab-btn.active {
+            background: var(--surface);
+            color: var(--active);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .grid-kpi {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 5px;
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .quality-water-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 5px;
+            width: 100%;
+            margin-bottom: 0;
+        }
+        .water-card {
+            background: var(--surface);
+            border-radius: 0px;
+            padding: 5px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .water-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 5px;
+        }
+        .water-station-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .water-station-status {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .water-tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+        .water-tag-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .water-tag-val {
+            font-weight: 700;
+            color: var(--active);
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 0px;
+            padding: 0px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+            flex: 1;
+            min-width: 0;
+        }
+        .card-title {
+            width: 100%;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-top: 0;
+            margin-bottom: 5px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+            text-align: left;            
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            justify-content: center;  /* Căn giữa theo chiều ngang */
+            align-items: center;      /* Căn giữa theo chiều dọc */
+            gap: 5px;                 /* Tạo khoảng cách đều giữa Icon và Chữ */
+            text-align: center;
+        }
+        .gauge-host {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+        .gauge-host .scada-gauge {
+            width: 100% !important; 
+            max-width: 100% !important;
+        }
+        
+        .main-content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 5px;
+            flex: 1;
+            min-height: 0;
+        }
+        .main-content-grid .card {
+            background: var(--surface);
+            border-radius: 0px;
+            padding: 5px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            min-height: 0;
+        }
+        .table-responsive {
+            width: 100%;
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            background: var(--surface);
+        }
+        .station-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            color: var(--text-dark);
+        }
+        .station-table th, .station-table td {
+            padding: 5px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+        .station-table th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .badge-danger {
+            background-color: #fee2e2;
+            color: #dc2626;
+            padding: 5px;
+            border-radius: 0px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .refresh-btn {
+            background: var(--active);
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 0px;
+            cursor: pointer;
+            font-weight: 500;
+            min-height: 40px;
+        }
+        .refresh-btn:hover { background: var(--color-hover); }
+
+        /* Style màu sắc cho nhãn chỉ số đếm cảnh báo trên tiêu đề */
+        #lblOfflineSummary { color: #dc2626; }
+        #lblViolationSummary { color: #d97706; }
+
+    /* ==================================================================== */
+    /* CẤU HÌNH RESPONSIVE CHO DI ĐỘNG & TABLET */
+    /* ==================================================================== */
+    @media (max-width: 1200px) {
+        .grid-kpi {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .quality-water-panel {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .overview-container {
+            padding: 5px;
+            height: auto; 
+            overflow-y: auto;
+        }
+
+        .header-panel > div:first-child {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 5px;
+        }
+        
+        .header-panel {
+            padding: 5px;
+            flex-direction: column; 
+            align-items: stretch;
+            text-align: center;
+        }
+        
+        .header-panel h2 {
+            font-size: 1.1rem;
+            text-align: center;
+            width: 100%;
+        }
+
+        .tab-bar-container {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .tab-btn {
+            flex: 1; 
+            padding: 6px 4px;
+            font-size: 0.75rem;
+        }
+
+        .refresh-btn {
+            width: 100%; 
+            padding: 8px;
+        }
+        
+        .grid-kpi {
+            grid-template-columns: 1fr;
+            gap: 5px;
+        }
+        
+        .main-content-grid {
+            grid-template-columns: 1fr !important; 
+            gap: 5px;
+        }
+
+        .main-content-grid .card {
+            min-height: 240px; 
+            padding: 5px;
+        }
+        
+        .station-table th:nth-child(2), 
+        .station-table td:nth-child(2) {
+            display: none; 
+        }
+
+        .card-title {
+            white-space: normal;
+            line-height: 1.35;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .tab-bar-container {
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .tab-btn,
+        .refresh-btn {
+            width: 100%;
+        }
+
+        .card-title {
+            white-space: normal;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        .header-panel h2 {
+            font-size: 1rem;
+        }
+
+        .main-content-grid .card {
+            min-height: 220px;
+        }
+
+        .station-table {
+            font-size: 0.78rem;
+        }
+    }
+    </style>
+</head>
+<body>
+
+<div class="overview-container">
+    <div class="header-panel">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <h2 style="margin:0; color:#1e293b; font-size: 1.2rem;">TỔNG QUAN CÁC CHỈ SỐ KPI</h2>
+            
+            <div class="tab-bar-container">
+                <button class="tab-btn" id="tabMonreBtn">
+                    </i>DỮ LIỆU BỘ TÀI NGUYÊN
+                </button>
+                <button class="tab-btn active" id="tabRealtimeBtn">
+                    </i>DỮ LIỆU WEB
+                </button>
+            </div>
+        </div>
+        <div>
+            <button class="refresh-btn" id="btnRefreshOverview">🔄 LÀM MỚI</button>
+        </div>
+    </div>
+
+    <div class="grid-kpi" id="dynamicGaugeWrapper"></div>
+
+    <div class="quality-water-panel" id="qualityWaterWrapper">
+        <div class="water-card" style="border-left-color: #cbd5e1;"><div style="color: #64748b; font-size: 0.8rem; font-style: italic;">Đang kiểm tra chất lượng nước...</div></div>
+        <div class="water-card" style="border-left-color: #cbd5e1;"><div style="color: #64748b; font-size: 0.8rem; font-style: italic;">Đang kiểm tra chất lượng nước...</div></div>
+        <div class="water-card" style="border-left-color: #cbd5e1;"><div style="color: #64748b; font-size: 0.8rem; font-style: italic;">Đang kiểm tra chất lượng nước...</div></div>
+    </div>
+
+    <div class="main-content-grid">
+        <div class="card" style="align-items: stretch; width: 100%;">
+            <div class="card-title">
+                <i class="fa-solid fa-chart-line" style="color: #10b981; margin-right: 6px;"></i>BIỂU ĐỒ DỮ LIỆU LỊCH SỬ CÁC CHỈ SỐ KPI
+            </div>
+            <div style="flex: 1; width: 100%; height: 100%; position: relative; min-height: 0;">
+                <canvas id="kpiHistoryChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card" style="align-items: stretch;">
+            <div class="card-title" style="color: #334155;">
+                <i class="fa-solid fa-triangle-exclamation" style="color: #dc2626; margin-right: 6px;"></i>DANH SÁCH CẢNH BÁO: Mất kết nối (<span id="lblOfflineSummary">00</span>/<span class="lbl-total-summary">00</span>) - Vi phạm: (<span id="lblViolationSummary">00</span>/<span class="lbl-total-summary">00</span>)
+            </div>
+            <div class="table-responsive">
+                <table class="station-table">
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Tên Trạm</th>
+                        <th style="text-align: center;">Thời Gian</th>
+                        <th style="text-align: center;">Tên Tag</th>
+                        <th style="text-align: center;">Chi Tiết Lỗi</th>
+                        <th style="text-align: center;">Trạng Thái</th>
+                    </tr>
+                </thead>
+                <tbody id="offlineTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #64748b; font-style: italic;">Đang đồng bộ dữ liệu giám sát...</td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Sử dụng khối kiểm tra tránh lỗi trùng lặp định nghĩa biến khi nạp lại trang qua AJAX
+if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
+    var OVERVIEW_MODULE_INITIALIZED = true;
+}
+
+(() => {
+    const TAG_LABELS_LOCAL = {
+        'amino': 'Amino', 'flow': 'Lưu lượng', 'level': 'Mực nước', 'nh4': 'Amoni',
+        'nitrat': 'Nitrat', 'no3': 'Nitrat', 'ph': 'Độ pH', 'tds': 'TDS', 'totalindex': 'TổngLL',
+        'scada_tb24': 'CHẤT LƯƠNG NƯỚC TRẠM BƠM SỐ 24', 'scada_gs5nm1': 'CHẤT LƯƠNG NƯỚC GS5NM1', 'scada_gs4nm2': 'CHẤT LƯƠNG NƯỚC GS4NM2'
+    };    
+
+    const GAUGE_CONFIGS = [
+        { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 2000, stationIds: "monre_35_clnqt4,monre_35_g1,monre_35_g12,monre_35_g15,monre_35_g18,monre_35_g2,monre_35_g20,monre_35_g22,monre_35_g23,monre_35_g24,monre_35_g25,monre_35_g27,monre_35_g4,monre_35_qt3,monre_35_qt4,monre_35_qt5,monre_36_clngs4nm2,monre_36_gs1nm2,monre_36_gs2nm2,monre_36_gs3nm2,monre_36_gs4nm2,monre_36_qt1nm2,monre_36_qt2nm2,monre_391_g21,monre_391_g26,monre_391_qt2m,monre_393_clngs5nm1,monre_393_gs1nm1,monre_393_gs2nm1,monre_393_gs3nm1,monre_393_gs4nm1,monre_393_gs5nm1,monre_393_qt1nm1,monre_393_qt2nm1" },
+        { id: "gauge2", title: "GP35", color: "#10b981", max: 2000, stationIds: "monre_35_clnqt4,monre_35_g1,monre_35_g12,monre_35_g15,monre_35_g18,monre_35_g2,monre_35_g20,monre_35_g22,monre_35_g23,monre_35_g24,monre_35_g25,monre_35_g27,monre_35_g4,monre_35_qt3,monre_35_qt4,monre_35_qt5" },
+        { id: "gauge3", title: "GP36", color: "#f59e0b", max: 2000, stationIds: "monre_36_clngs4nm2,monre_36_gs1nm2,monre_36_gs2nm2,monre_36_gs3nm2,monre_36_gs4nm2,monre_36_qt1nm2,monre_36_qt2nm2" },
+        { id: "gauge4", title: "GP391", color: "#6366f1", max: 1000, stationIds: "monre_391_g21,monre_391_g26,monre_391_qt2m" },
+        { id: "gauge5", title: "GP393", color: "#ec4899", max: 1000, stationIds: "monre_393_clngs5nm1,monre_393_gs1nm1,monre_393_gs2nm1,monre_393_gs3nm1,monre_393_gs4nm1,monre_393_gs5nm1,monre_393_qt1nm1,monre_393_qt2nm1" },
+        { id: "gauge6", title: "KHÁC", color: "#14b8a6", max: 1000, stationIds: "mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,scada_tb1,tva_tb16" }
+    ];
+
+    const GAUGE_CONFIGS_REALTIME = [
+        { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 2000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5,scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2,tva_tb21,tva_tb26,mqtt_qt2,scada_gs5nm1,tva_gs1nm1,mqtt_gs2nm1,tva_gs3nm1,scada_gs4nm1,tva_qt1nm1,tva_qt2nm1" },
+        { id: "gauge2", title: "GP35", color: "#10b981", max: 2000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5" },
+        { id: "gauge3", title: "GP36", color: "#f59e0b", max: 2000, stationIds: "scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2" },
+        { id: "gauge4", title: "GP391", color: "#6366f1", max: 1000, stationIds: "tva_tb21,tva_tb26,mqtt_qt2" },
+        { id: "gauge5", title: "GP393", color: "#ec4899", max: 1000, stationIds: "scada_gs5nm1,tva_gs1nm1,mqtt_gs2nm1,tva_gs3nm1,scada_gs4nm1,tva_qt1nm1,tva_qt2nm1" },
+        { id: "gauge6", title: "KHÁC", color: "#14b8a6", max: 1000, stationIds: "mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,tva_tb16" }
+    ];    
+
+    const CHART_COLORS = ['rgb(37, 99, 235)', 'rgb(16, 185, 129)', 'rgb(245, 158, 11)', 'rgb(99, 102, 241)', 'rgb(236, 72, 153)', 'rgb(20, 184, 166)'];
+
+    let currentActiveTab = 'REALTIME';
+    let gaugeInstances = {};
+    let hChart = null;
+
+    const TARGET_WATER_STATIONS = ["scada_tb24", "scada_gs5nm1", "scada_gs4nm2"];
+
+    function initModule() {
+        const wrapper = document.getElementById('dynamicGaugeWrapper');
+        if (!wrapper) return; // Nếu cấu trúc HTML chưa sẵn sàng, thoát ra để tránh lỗi crash script
+        
+        wrapper.innerHTML = "";
+        GAUGE_CONFIGS.forEach(cfg => {
+            const cardHtml = `
+                <div class="card">                        
+                    <div id="${cfg.id}Container" class="gauge-host"></div>
+                </div>
+            `;
+            wrapper.insertAdjacentHTML('beforeend', cardHtml);
+        });
+
+        try {
+            if (typeof ScadaGauge !== 'undefined') {
+                gaugeInstances = {}; // Reset cấu trúc instance tránh lưu cache rác
+                GAUGE_CONFIGS.forEach(cfg => {
+                    gaugeInstances[cfg.id] = new ScadaGauge(`${cfg.id}Container`, {
+                        min: 0, max: cfg.max, value: 0,
+                        title: cfg.title, unit: "m³/h",
+                        color: cfg.color, decimals: 0 
+                    });
+                });
+            }
+        } catch (err) {
+            console.error("❌ Lỗi khởi dựng hệ thống ScadaGauge:", err);
+        }
+
+        const chartDatasets = GAUGE_CONFIGS.map((cfg, index) => {
+            const baseColor = CHART_COLORS[index % CHART_COLORS.length];
+            return {
+                label: `${cfg.title}`,
+                data: [],
+                borderColor: baseColor,
+                backgroundColor: baseColor.replace('rgb', 'rgba').replace(')', ', 0.04)'),
+                borderWidth: 2,
+                tension: 0.2,
+                fill: true,
+                pointStyle: 'circle',            
+                pointRadius: 2,                  
+                pointHoverRadius: 7,             
+                pointBackgroundColor: '#ffffff', 
+                pointBorderColor: baseColor,     
+                pointBorderWidth: 2              
+            };
+        });
+
+        const canvasChart = document.getElementById('kpiHistoryChart');
+        if (canvasChart) {
+            const ctx = canvasChart.getContext('2d');
+            // Xóa biểu đồ cũ tồn dư trong biến toàn cục nếu có để tránh lỗi đè canvas
+            if (window.myGlobalKpiChart) {
+                window.myGlobalKpiChart.destroy();
+            }
+            hChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: chartDatasets 
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top', 
+                            labels: {
+                                usePointStyle: true,        
+                                pointStyle: 'circle',       
+                                boxWidth: 5,               
+                                boxHeight: 5,              
+                                padding: 15,                
+                                font: { size: 12, weight: '500', family: "'Segoe UI', sans-serif" }
+                            }
+                        }
+                    }
+                }
+            });
+            window.myGlobalKpiChart = hChart; // Lưu tham chiếu biểu đồ
+        }
+
+        setupTabEvents();
+        fetchDataOverview(); // Thực thi gọi nạp dữ liệu lập tức ngay khi vẽ xong UI
+    }
+
+    function setupTabEvents() {
+        const btnMonre = document.getElementById('tabMonreBtn');
+        const btnRealtime = document.getElementById('tabRealtimeBtn');
+
+        if(btnMonre && btnRealtime) {
+            btnMonre.addEventListener('click', () => {
+                if(currentActiveTab === 'MONRE') return;
+                currentActiveTab = 'MONRE';
+                btnMonre.classList.add('active');
+                btnRealtime.classList.remove('active');
+                fetchDataOverview(); 
+            });
+
+            btnRealtime.addEventListener('click', () => {
+                if(currentActiveTab === 'REALTIME') return;
+                currentActiveTab = 'REALTIME';
+                btnRealtime.classList.add('active');
+                btnMonre.classList.remove('active');
+                fetchDataOverview(); 
+            });
+        }
+    }
+
+    async function fetchDataOverview() {
+        // Bảo vệ hệ thống: Nếu các thẻ HTML chính đã bị xóa (chuyển sang trang khác), dừng thực thi hàm
+        if (!document.getElementById('offlineTableBody')) return;
+
+        try {
+            const activeConfigs = (currentActiveTab === 'MONRE') ? GAUGE_CONFIGS : GAUGE_CONFIGS_REALTIME;
+            const fetchPromises = activeConfigs.map(cfg => 
+                fetch(`/api/kpi/flow-summary?station_ids=${cfg.stationIds}&tag_key=flow&interval_mins=30`).then(res => res.json())
+            );
+            
+            const results = await Promise.all(fetchPromises);
+            let primaryLabels = [];
+
+            results.forEach((data, index) => {
+                const cfg = activeConfigs[index];
+                if (data.success) {
+                    if (gaugeInstances[cfg.id]) {
+                        gaugeInstances[cfg.id].max = cfg.max; 
+                        gaugeInstances[cfg.id].setTitle(cfg.title);
+                        gaugeInstances[cfg.id].setValue(data.total_instant_flow || 0);
+                    }
+                    if (index === 0 && Array.isArray(data.chart_data)) {
+                        primaryLabels = data.chart_data.map(item => 
+                            new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+                        );
+                    }
+                    if (hChart && hChart.data.datasets[index] && Array.isArray(data.chart_data)) {
+                        const currentTagKey = (cfg.tag_key || 'flow').toLowerCase().trim(); 
+                        const friendlyTagName = TAG_LABELS_LOCAL[currentTagKey] || cfg.title;
+
+                        hChart.data.datasets[index].label = `${cfg.title} (${friendlyTagName})`;
+                        hChart.data.datasets[index].data = data.chart_data.map(item => item.value);
+                    }
+                }
+            });
+
+            if (hChart) {
+                hChart.data.labels = primaryLabels;
+                hChart.update();
+            }
+
+            const resOverview = await fetch('/api/overview/latest');
+            const overviewResult = await resOverview.json();
+            const tableBody = document.getElementById('offlineTableBody');
+            const waterWrapper = document.getElementById('qualityWaterWrapper');
+            
+            if (overviewResult.success && Array.isArray(overviewResult.data)) {
+                if (waterWrapper) {
+                    waterWrapper.innerHTML = '';
+                    TARGET_WATER_STATIONS.forEach(targetId => {
+                        const stationData = overviewResult.data.find(d => String(d.logger_id).toLowerCase().trim() === targetId.toLowerCase().trim());
+                        
+                        if (stationData) {
+                            const cleanStationKey = String(stationData.logger_id).toLowerCase().trim();
+                            const name = TAG_LABELS_LOCAL[cleanStationKey] || stationData.display_name || stationData.logger_id;
+                            const dbStatus = stationData.last_known_status ? String(stationData.last_known_status).toLowerCase().trim() : "offline";
+                            const isOnline = (dbStatus === 'online' || dbStatus === '1' || dbStatus === 'true');
+                            
+                            let tagsMarkup = '';
+                            let cardBorderColor = isOnline ? '#14b8a6' : '#ef4444';
+                            
+                            if (stationData.tags && typeof stationData.tags === 'object') {
+                                Object.keys(stationData.tags).forEach(tagKey => {
+                                    const cleanKey = tagKey.toLowerCase().trim();
+                                    if (cleanKey !== 'flow' && cleanKey !== 'totalindex') {
+                                        const label = TAG_LABELS_LOCAL[cleanKey] || tagKey.toUpperCase();
+                                        const tagInfo = stationData.tags[tagKey];
+                                        
+                                        let valStyle = '';
+                                        if (tagInfo.threshold_enabled && tagInfo.value !== null) {
+                                            const currentVal = parseFloat(tagInfo.value);
+                                            const maxVal = tagInfo.max_value !== null ? parseFloat(tagInfo.max_value) : null;
+                                            const minVal = tagInfo.min_value !== null ? parseFloat(tagInfo.min_value) : null;
+                                            if ((maxVal !== null && currentVal > maxVal) || (minVal !== null && currentVal < minVal)) {
+                                                valStyle = 'color: #ef4444; background: #fee2e2; padding: 0 4px; border-radius: 0px; font-weight: 800;';
+                                            }
+                                        }
+                                        
+                                        tagsMarkup += `
+                                            <div class="water-tag-item">
+                                                <span>${label}:</span>
+                                                <span class="water-tag-val" style="${valStyle}">${tagInfo.value ?? '-'}</span>
+                                            </div>
+                                        `;
+                                    }
+                                });
+                            }
+                            
+                            if (!tagsMarkup) {
+                                tagsMarkup = '<div style="color: #94a3b8; font-size: 0.75rem; font-style: italic;">Không có thông số đo chất lượng</div>';
+                            }
+
+                            const cardHtml = `
+                                <div class="water-card" style="border-left-color: ${cardBorderColor};">
+                                    <div class="water-card-header">
+                                        <span class="water-station-title"><i class="fa-solid fa-droplet" style="color: #06b6d4;"></i> ${name}</span>
+                                        <span class="water-station-status" style="color: ${isOnline ? '#10b981' : '#ef4444'};">
+                                            ${isOnline ? '● Online' : '● Mất kết nối'}
+                                        </span>
+                                    </div>
+                                    <div class="water-tags-container">
+                                        ${tagsMarkup}
+                                    </div>
+                                </div>
+                            `;
+                            waterWrapper.insertAdjacentHTML('beforeend', cardHtml);
+                        } else {
+                            waterWrapper.insertAdjacentHTML('beforeend', `
+                                <div class="water-card" style="border-left-color: #cbd5e1;">
+                                    <div class="water-card-header">
+                                        <span class="water-station-title" style="color: #94a3b8;"><i class="fa-solid fa-ban"></i> ${targetId.toUpperCase()}</span>
+                                        <span class="water-station-status" style="color: #94a3b8;">Không có dữ liệu</span>
+                                    </div>
+                                </div>
+                            `);
+                        }
+                    });
+                }
+
+                if (tableBody) {
+                    tableBody.innerHTML = '';
+                    let totalGlobal = overviewResult.data.length;
+                    let offlineGlobalCount = 0;
+                    let violationGlobalCount = 0;
+                    let hasErrorsOnScreen = 0;
+
+                    overviewResult.data.forEach(st => {
+                        const stationName = st.display_name || st.logger_id;
+                        const loggerIdLower = String(st.logger_id).toLowerCase().trim();
+                        const isMonreStation = loggerIdLower.startsWith('monre_');
+
+                        const dbStatus = st.last_known_status ? String(st.last_known_status).toLowerCase().trim() : "offline";
+                        const isOnline = (dbStatus === 'online' || dbStatus === '1' || dbStatus === 'true');
+
+                        if (!isOnline) {
+                            offlineGlobalCount++;
+                            hasErrorsOnScreen++;
+
+                            let targetTs = isMonreStation ? st.data_ts : st.current_ts;
+                            let transmissionTime = 'N/A';
+                            
+                            if (targetTs) {
+                                const dateObj = new Date(targetTs);
+                                transmissionTime = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}:${String(dateObj.getSeconds()).padStart(2, '0')}`;
+                            }
+
+                            let delayText = "N/A";
+                            if (st.current_ts && st.data_ts) {
+                                const delayMinutes = Math.floor((new Date(st.current_ts).getTime() - new Date(st.data_ts).getTime()) / 60000);
+                                delayText = delayMinutes > 0 ? `${delayMinutes} phút` : '0 phút';
+                            }
+
+                            const row = `
+                                <tr style="background: #fff5f5;">
+                                    <td style="text-align: left;"><strong>${stationName}</strong></td>
+                                    <td style="text-align: center;"><span style="color: #475569;">${transmissionTime}</span></td>
+                                    <td style="text-align: center; color: #94a3b8; font-style: italic;">- Mất kết nối -</td>
+                                    <td style="text-align: center;"><span style="color: #e11d48; font-weight: 500;">Trễ ${delayText}</span></td>
+                                    <td style="text-align: center;"><span class="badge-danger">🔴 Mất tín hiệu</span></td>
+                                </tr>
+                            `;
+                            tableBody.insertAdjacentHTML('beforeend', row);
+                        }
+
+                        let stationHasViolation = false;
+                        if (st.tags && typeof st.tags === 'object') {
+                            Object.keys(st.tags).forEach(tagKey => {
+                                const tagInfo = st.tags[tagKey];
+                                
+                                if (tagInfo && tagInfo.threshold_enabled === true && tagInfo.value !== null) {
+                                    const currentVal = parseFloat(tagInfo.value);
+                                    const maxVal = tagInfo.max_value !== null ? parseFloat(tagInfo.max_value) : null;
+                                    const minVal = tagInfo.min_value !== null ? parseFloat(tagInfo.min_value) : null;
+                                    
+                                    let isBreached = false;
+                                    let breachDetail = "";
+
+                                    if (maxVal !== null && currentVal > maxVal) {
+                                        isBreached = true;
+                                        breachDetail = ` > Max <b>${maxVal}</b>`;
+                                    } else if (minVal !== null && currentVal < minVal) {
+                                        isBreached = true;
+                                        breachDetail = ` < Min <b>${minVal}</b>`;
+                                    }
+
+                                    if (isBreached) {
+                                        stationHasViolation = true;
+                                        hasErrorsOnScreen++;
+
+                                        let tagTargetTs = isMonreStation ? tagInfo.data_ts : tagInfo.current_ts;
+                                        let tagDataTsStr = 'N/A';
+                                        
+                                        if (tagTargetTs) {
+                                            const dateObj = new Date(tagTargetTs);
+                                            tagDataTsStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}:${String(dateObj.getSeconds()).padStart(2, '0')}`;
+                                        }
+
+                                        const cleanTagKey = tagKey.toLowerCase().trim();
+                                        const friendlyTagDisplay = TAG_LABELS_LOCAL[cleanTagKey] || tagKey.toUpperCase();
+
+                                        const rowBreach = `
+                                            <tr style="background: #fffbeb;">
+                                                <td style="text-align: left;"><span style="color: #b45309; font-weight: 600;">${stationName}</span></td>
+                                                <td style="text-align: center;"><span style="color: #475569;">${tagDataTsStr}</span></td>
+                                                <td style="text-align: center;"><span style="font-weight: 700; color: #2563eb;">${friendlyTagDisplay}</span></td>
+                                                <td style="text-align: center; color: #d97706;"><b>${currentVal}</b>${breachDetail}</td>
+                                                <td style="text-align: center;"><span class="badge-danger" style="background-color: #fef3c7; color: #d97706; border: 1px solid #fde68a;">⚠️ Vi phạm ngưỡng</span></td>
+                                            </tr>
+                                        `;
+                                        tableBody.insertAdjacentHTML('beforeend', rowBreach);
+                                    }
+                                }
+                            });
+                        }
+                        if (stationHasViolation) {
+                            violationGlobalCount++;
+                        }
+                    });
+
+                    // Kiểm tra tồn tại trước khi điền dữ liệu tránh lỗi null tham chiếu
+                    if(document.getElementById("lblOfflineSummary")) document.getElementById("lblOfflineSummary").innerText = String(offlineGlobalCount).padStart(2, '0');
+                    if(document.getElementById("lblViolationSummary")) document.getElementById("lblViolationSummary").innerText = String(violationGlobalCount).padStart(2, '0');
+                    
+                    document.querySelectorAll(".lbl-total-summary").forEach(el => {
+                        el.innerText = String(totalGlobal).padStart(2, '0');
+                    });
+
+                    if (hasErrorsOnScreen === 0) {
+                        tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #10b981; font-weight: 600; font-style: italic;">✅ Toàn bộ hệ thống trạm đều đang Online ổn định!</td></tr>`;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("❌ Lỗi xử lý đồng bộ giao diện overview:", error);
+        }
+    }
+
+    const btnRef = document.getElementById('btnRefreshOverview');
+    if(btnRef) {
+        btnRef.addEventListener('click', fetchDataOverview);
+    }
+
+    // ⚡ GIẢI PHÁP VÀNG: Thay thế setTimeout cố định bằng bộ lắng nghe MutationObserver 
+    // Hoặc chạy ngay lập tức khi mã JS này được thực thi, do DOM đã được ghi đè từ luồng AJAX layout
+    initModule();
+
+    // Thiết lập vòng lặp làm mới 30 giây một lần
+    const refreshIntervalId = setInterval(fetchDataOverview, 30000);
+
+    // Dọn dẹp tiến trình ngầm (clearInterval) một cách chủ động khi người dùng rời khỏi trang này
+    const destObserver = new MutationObserver(() => {
+        if (!document.getElementById("offlineTableBody")) {
+            clearInterval(refreshIntervalId);
+            destObserver.disconnect();
+        }
+    });
+    const parentContainer = document.getElementById("mainContent") || document.body;
+    destObserver.observe(parentContainer, { childList: true });
+})();
+</script>
+
+</body>
+</html>

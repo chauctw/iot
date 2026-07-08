@@ -1,0 +1,432 @@
+<div class="page-card animate-fade-in" style="display: flex; flex-direction: column; gap: 5px; height: 100%; box-sizing: border-box; padding: 5px;">
+    
+    <div class="filter-wrapper" style="background: #f8fafc; padding: 5px; border-radius: 0px; border: 1px solid #e2e8f0;">
+        <h3 style="margin-top: 0; margin-bottom: 5px; color: #0f172a; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
+            <i class="fa-solid fa-table" style="color: #059669;"></i> BẢNG DỮ LIỆU THỐNG KÊ LOGGER TỔNG HỢP
+        </h3>
+        
+        <form id="statsFilterForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) 120px; gap: 5px; align-items: flex-end;">
+            
+            <div>
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 5px;">Phân Nhóm Trạm</label>
+                <select id="filterGroupType" style="width: 100%; padding: 5px; border-radius: 0px; border: 1px solid #cbd5e1; font-size: 0.85rem; font-weight: 600; background: #fff; min-height: 40px;">
+                    <option value="ALL">-- Tất cả hệ thống --</option>
+                    <option value="REALTIME" selected>DỮ LIỆU WEB</option>
+                    <option value="MONRE">BỘ TÀI NGUYÊN</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 5px;">Chọn Trạm Vận Hành</label>
+                <select id="filterStationId" style="width: 100%; padding: 5px; border-radius: 0px; border: 1px solid #cbd5e1; font-size: 0.85rem; min-height: 40px;" required>
+                    <option value="ALL">-- Tất cả trong nhóm --</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 5px;">Lọc Theo Chỉ Số (Tag)</label>
+                <select id="filterTagSelect" style="width: 100%; padding: 5px; border-radius: 0px; border: 1px solid #cbd5e1; font-size: 0.85rem; font-weight: 600; color: #0d9488; min-height: 40px;">
+                    <option value="ALL">-- Tất cả chỉ số --</option>
+                    <option value="flow">Lưu lượng</option>
+                    <option value="totalIndex">Tổng chỉ số</option>                    
+                    <option value="level">Mực nước</option>
+                    <option value="ph">Độ pH</option>
+                    <option value="tds">TDS</option>
+                    <option value="no3">Nitrat</option>
+                    <option value="nh4">Amoni</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 5px;">Từ Ngày</label>
+                <input type="datetime-local" id="filterStartTime" style="width: 100%; padding: 5px; border-radius: 0px; border: 1px solid #cbd5e1; font-size: 0.85rem; min-height: 40px;" required>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 5px;">Đến Ngày</label>
+                <input type="datetime-local" id="filterEndTime" style="width: 100%; padding: 5px; border-radius: 0px; border: 1px solid #cbd5e1; font-size: 0.85rem; min-height: 40px;" required>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 5px;">Độ Phân Giải</label>
+                <select id="filterInterval" style="width: 100%; padding: 5px; border-radius: 0px; border: 1px solid #cbd5e1; font-size: 0.85rem; min-height: 40px;">
+                    <option value="5" selected>5 Phút</option>
+                    <option value="15">15 Phút</option>
+                    <option value="30">30 Phút</option>
+                    <option value="60">1 Tiếng</option>
+                    <option value="1440">1 Ngày</option>
+                </select>
+            </div>
+
+            <div>
+                <button type="submit" style="width: 100%; padding: 5px; background: #0d9488; color: white; border: none; border-radius: 0px; font-weight: 600; cursor: pointer; font-size: 0.85rem; min-height: 40px;">
+                    <i class="fa-solid fa-arrows-rotate"></i> TRÍCH XUẤT
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 0px; padding: 5px; flex: 1; display: flex; flex-direction: column; min-height: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 5px; margin-bottom: 5px; flex-wrap: wrap;">
+            <h4 style="margin: 0; font-size: 0.9rem; color: #0f172a;"><i class="fa-solid fa-table-list"></i> Ma trận thông số đo chi tiết</h4>
+            <span id="txtDataCount" style="font-size: 0.8rem; color: #64748b; font-weight: 500;"></span>
+        </div>
+        
+        <div style="flex: 1; overflow-y: auto; overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 0px; background: white;">
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.82rem; white-space: nowrap;">
+                <thead id="statsThead" style="position: sticky; top: 0; background: #f1f5f9; z-index: 10; box-shadow: 0 1px 0 #cbd5e1;">
+                    <tr>
+                        <th style="padding: 5px; border: 1px solid #cbd5e1; color: #334155;">STT</th>
+                        <th style="padding: 5px; border: 1px solid #cbd5e1; color: #334155; text-align: left;">Thời gian</th>
+                        <th style="padding: 5px; border: 1px solid #cbd5e1; color: #64748b; font-style: italic;">Chưa có dữ liệu trích xuất...</th>
+                    </tr>
+                </thead>
+                <tbody id="statsTbody">
+                    <tr>
+                        <td colspan="3" style="text-align: center; padding: 5px; color: #94a3b8; font-style: italic;">Thiết lập mốc thời gian và nhấn nút TRÍCH XUẤT dữ liệu...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+(() => {
+    let globalStationsList = [];
+    const ALL_TAGS = ['flow', 'totalIndex', 'pressure', 'level', 'ph', 'tds', 'no3', 'nh4'];
+
+    // 🟢 ĐÃ CẬP NHẬT: Từ điển ngôn ngữ đồng bộ hóa chữ thường
+    const TAG_LABELS = {
+        'amino': 'Amoni',
+        'flow': 'Lưu lượng',
+        'level': 'Mực nước',
+        'nh4': 'Amoni',
+        'nitrat': 'Nitrat',
+        'no3': 'Nitrat',
+        'ph': 'Độ pH',
+        'tds': 'TDS',
+        'totalindex': 'TổngLL'
+    };
+
+    const DB_TAG_NORMALIZE = {
+        'flow': 'flow',
+        'totalindex': 'totalIndex', 'totalIndex': 'totalIndex',
+        'pressure': 'pressure',
+        'level': 'level',
+        'ph': 'ph', 'pH': 'ph',
+        'tds': 'tds', 'TDS': 'tds',
+        'no3': 'no3', 'nitrat': 'no3',
+        'nh4': 'nh4', 'amino': 'nh4'
+    };
+
+    function initDateTime() {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        const formatLocalISO = (date) => {
+            const tzOffset = date.getTimezoneOffset() * 60000;
+            return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+        };
+        document.getElementById('filterStartTime').value = formatLocalISO(startOfToday);
+        document.getElementById('filterEndTime').value = formatLocalISO(now);
+    }
+
+    function handleGroupChange() {
+        const groupType = document.getElementById('filterGroupType').value;
+        const stationSelect = document.getElementById('filterStationId');
+        const intervalSelect = document.getElementById('filterInterval');
+
+        let filtered = [];
+        if (groupType === 'ALL') {
+            filtered = [...globalStationsList];
+        } else if (groupType === 'REALTIME') {
+            filtered = globalStationsList.filter(st => {
+                const id = String(st.id).toLowerCase();
+                return id.startsWith('mqtt_') || id.startsWith('tva_') || id.startsWith('scada_');
+            });
+        } else if (groupType === 'MONRE') {
+            filtered = globalStationsList.filter(st => String(st.id).toLowerCase().startsWith('monre_'));
+        }
+
+        stationSelect.innerHTML = '<option value="ALL">-- Tất cả trong nhóm --</option>';
+        filtered.forEach(st => {
+            const opt = document.createElement('option');
+            opt.value = st.id;
+            opt.textContent = String(st.name);
+            stationSelect.appendChild(opt);
+        });
+
+        if (groupType === 'MONRE') {
+            intervalSelect.value = "60";
+            intervalSelect.disabled = true;
+            intervalSelect.style.background = "#f1f5f9";
+        } else {
+            intervalSelect.disabled = false;
+            intervalSelect.style.background = "#fff";
+        }
+    }
+
+    async function loadStations() {
+        try {
+            const res = await fetch('/api/overview/latest');
+            const resJson = await res.json();
+            if (resJson.success && Array.isArray(resJson.data)) {
+                globalStationsList = resJson.data.map(item => ({
+                    id: item.logger_id,
+                    name: item.display_name || item.logger_id
+                }));
+                handleGroupChange();
+            }
+        } catch (err) {
+            console.error("❌ Không thể nạp danh mục trạm thống kê:", err);
+        }
+    }
+
+    async function executeQuery() {
+        const groupType = document.getElementById('filterGroupType').value;
+        const selectedStation = document.getElementById('filterStationId').value;
+        const selectedTagFilter = document.getElementById('filterTagSelect').value; 
+        const startTime = document.getElementById('filterStartTime').value.replace('T', ' ') + ':00';
+        const endTime = document.getElementById('filterEndTime').value.replace('T', ' ') + ':00';
+        const intervalMins = document.getElementById('filterInterval').value;
+
+        const thead = document.getElementById('statsThead');
+        const tbody = document.getElementById('statsTbody');
+        
+        tbody.innerHTML = '<tr><td colspan="100" style="text-align: center; padding: 30px; color: #475569;"><i class="fa-solid fa-spinner fa-spin fa-lg"></i> Đang tổng hợp số liệu phân nhóm & lọc chỉ số...</td>' + '</tr>';
+
+        let candidates = [];
+        if (groupType === 'ALL') {
+            candidates = [...globalStationsList];
+        } else if (groupType === 'REALTIME') {
+            candidates = globalStationsList.filter(st => {
+                const id = String(st.id).toLowerCase();
+                return id.startsWith('mqtt_') || id.startsWith('tva_') || id.startsWith('scada_');
+            });
+        } else if (groupType === 'MONRE') {
+            candidates = globalStationsList.filter(st => String(st.id).toLowerCase().startsWith('monre_'));
+        }
+
+        if (selectedStation !== 'ALL') {
+            candidates = candidates.filter(s => s.id === selectedStation);
+        }
+
+        if (candidates.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="100" style="text-align: center; padding: 20px; color: #dc2626;">Không tìm thấy trạm nào thuộc cấu hình nhóm này!</td>' + '</tr>';
+            return;
+        }
+
+        let dbTagsToQuery = [];
+        if (selectedTagFilter === 'ALL') {
+            dbTagsToQuery = Object.keys(DB_TAG_NORMALIZE);
+        } else {
+            dbTagsToQuery = Object.keys(DB_TAG_NORMALIZE).filter(dbKey => DB_TAG_NORMALIZE[dbKey] === selectedTagFilter);
+        }
+
+        const targetDisplayTags = selectedTagFilter === 'ALL' ? ALL_TAGS : [selectedTagFilter];
+
+        try {
+            const promises = [];
+            candidates.forEach(st => {
+                dbTagsToQuery.forEach(dbTag => {
+                    const url = `/api/overview/history-chart?station_id=${encodeURIComponent(st.id)}&tag_key=${encodeURIComponent(dbTag)}&start_time=${encodeURIComponent(startTime)}&end_time=${encodeURIComponent(endTime)}&interval_mins=${intervalMins}`;
+                    promises.push(
+                        fetch(url)
+                            .then(r => r.json())
+                            .then(res => ({ stationId: st.id, rawDbTag: dbTag, data: res.success ? res.data : [] }))
+                    );
+                });
+            });
+
+            const rawResults = await Promise.all(promises);
+
+            const activeCellKeys = new Set();
+            const pivotMap = new Map();
+
+            rawResults.forEach(res => {
+                if (res.data && res.data.length > 0) {
+                    const targetDisplayTag = DB_TAG_NORMALIZE[res.rawDbTag];
+                    if (!targetDisplayTag) return;
+
+                    res.data.forEach(item => {
+                        const tsKey = item.timestamp; 
+                        if (!pivotMap.has(tsKey)) {
+                            pivotMap.set(tsKey, {});
+                        }
+                        
+                        const cellKey = `${res.stationId}_${targetDisplayTag}`;
+                        if (pivotMap.get(tsKey)[cellKey] !== undefined) {
+                            pivotMap.get(tsKey)[cellKey] = (pivotMap.get(tsKey)[cellKey] + item.value) / 2;
+                        } else {
+                            pivotMap.get(tsKey)[cellKey] = item.value; 
+                        }
+                        activeCellKeys.add(cellKey);
+                    });
+                }
+            });
+
+            const activeStations = candidates.filter(st => {
+                return targetDisplayTags.some(tag => activeCellKeys.has(`${st.id}_${tag}`));
+            });
+
+            const sortedTimestamps = Array.from(pivotMap.keys()).sort((a, b) => new Date(b) - new Date(a));
+            document.getElementById('txtDataCount').textContent = `Tổng số: ${sortedTimestamps.length} khung giờ kết xuất.`;
+
+            if (sortedTimestamps.length === 0 || activeStations.length === 0) {
+                thead.innerHTML = '<tr><th>STT</th><th>Thời gian (data_ts)</th><th>Trạng thái</th></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 30px; color: #64748b; font-style: italic;">Không tìm thấy dữ liệu đồng bộ nào cho thông số đo đã chọn! Cột trống đã tự động ẩn.</td>' + '</tr>';
+                return;
+            }
+
+            // DỰNG HEADER ĐỘNG 2 TẦNG
+            let headRow1 = '<tr><th rowspan="2" style="padding:10px; border:1px solid #cbd5e1; background:#e2e8f0; min-width:50px;">STT</th>';
+            headRow1 += '<th rowspan="2" style="padding:10px; border:1px solid #cbd5e1; background:#e2e8f0; text-align:left; min-width:160px;">Thời gian (data_ts)</th>';
+            let headRow2 = '<tr>';
+
+            activeStations.forEach(st => {
+                const validTagsForThisStation = targetDisplayTags.filter(tag => activeCellKeys.has(`${st.id}_${tag}`));
+                
+                headRow1 += '<th colspan="' + validTagsForThisStation.length + '" style="padding:8px; border:1px solid #cbd5e1; background:#f1f5f9; color:#1e293b; font-weight:700;">' + st.name + '</th>';
+                validTagsForThisStation.forEach(tag => {
+                    // 🟢 CẢI TIẾN: Biên dịch nhãn cột tầng 2 sang Tiếng Việt bằng cách chuyển chữ thường tra cứu từ điển
+                    const cleanTagKey = tag.toLowerCase().trim();
+                    const friendlyLabel = TAG_LABELS[cleanTagKey] || tag;
+                    
+                    headRow2 += '<th style="padding:6px; border:1px solid #cbd5e1; background:#fff; font-size:0.75rem; color:#475569; font-weight:600;">' + friendlyLabel + '</th>';
+                });
+            });
+            headRow1 += '</tr>';
+            headRow2 += '</tr>';
+            thead.innerHTML = headRow1 + headRow2;
+
+            // DỰNG BODY ĐỘNG
+            let bodyHtml = "";
+            sortedTimestamps.forEach((ts, idx) => {
+                const displayTime = new Date(ts).toLocaleString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const rowData = pivotMap.get(ts);
+                const bgColor = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+
+                bodyHtml += '<tr style="border-bottom: 1px solid #e2e8f0; background: ' + bgColor + ';">';
+                bodyHtml += '<td style="padding:8px 6px; border-right:1px solid #e2e8f0; color:#64748b;">' + (idx + 1) + '</td>';
+                bodyHtml += '<td style="padding:8px 10px; border-right:1px solid #e2e8f0; text-align:left; font-weight:500; color:#334155;">' + displayTime + '</td>';
+
+                activeStations.forEach(st => {
+                    const validTagsForThisStation = targetDisplayTags.filter(tag => activeCellKeys.has(`${st.id}_${tag}`));
+                    
+                    validTagsForThisStation.forEach(tag => {
+                        const cellKey = `${st.id}_${tag}`;
+                        const val = rowData[cellKey];
+                        
+                        if (val !== undefined && val !== null) {
+                            let textStyle = "color: #0284c7; font-weight: 600;";
+                            
+                            // 🟢 ĐỒNG BỘ: So khớp màu sắc chữ dựa theo mã tag gốc của hệ thống
+                            const lowerTag = tag.toLowerCase().trim();
+                            if (lowerTag === 'flow') textStyle = "color: #2563eb; font-weight: 700;";
+                            if (lowerTag === 'pressure') textStyle = "color: #dc2626; font-weight: 600;";
+                            if (lowerTag === 'ph') textStyle = "color: #059669; font-weight: 600;";
+                            if (lowerTag === 'tds') textStyle = "color: #b45309; font-weight: 600;";
+                            if (lowerTag === 'no3' || lowerTag === 'nh4') textStyle = "color: #7c3aed; font-weight: 600;";
+
+                            bodyHtml += '<td style="padding:8px 6px; border-right:1px solid #e2e8f0; ' + textStyle + '">' + parseFloat(val.toFixed(2)).toLocaleString('vi-VN') + '</td>';
+                        } else {
+                            bodyHtml += '<td style="padding:8px 6px; border-right:1px solid #e2e8f0; color: #cbd5e1; font-style:italic;">-</td>';
+                        }
+                    });
+                });
+                bodyHtml += '</tr>';
+            });
+
+            tbody.innerHTML = bodyHtml;
+
+        } catch (error) {
+            console.error("❌ Thất bại khi kết xuất ma trận dữ liệu thống kê:", error);
+            tbody.innerHTML = '<tr><td colspan="100" style="text-align: center; padding: 20px; color: #dc2626; font-weight: 600;">Lỗi kết nối hoặc xử lý dữ liệu từ API Server.</td>' + '</tr>';
+        }
+    }
+
+    async function startModule() {
+        initDateTime();
+        document.getElementById('filterGroupType').addEventListener('change', handleGroupChange);
+        await loadStations();
+        executeQuery();
+    }
+
+    document.getElementById('statsFilterForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        executeQuery();
+    });
+
+    setTimeout(startModule, 50);
+})();
+</script>
+
+<style>
+    .page-card.animate-fade-in {
+        gap: 5px !important;
+    }
+
+    .page-card,
+    .filter-wrapper,
+    .page-card > div:nth-of-type(2) {
+        border-radius: 0 !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+    }
+
+    #statsFilterForm > div,
+    #statsFilterForm input,
+    #statsFilterForm select,
+    #statsFilterForm button {
+        min-width: 0;
+    }
+
+    #statsFilterForm input,
+    #statsFilterForm select,
+    #statsFilterForm button {
+        min-height: 40px !important;
+    }
+
+    #statsThead th,
+    #statsTbody td {
+        padding: 5px !important;
+        border: 1px solid #cbd5e1 !important;
+    }
+
+    .page-card > div:nth-of-type(2) table {
+        min-width: 100%;
+    }
+
+    @media (max-width: 768px) {
+        #statsFilterForm {
+            grid-template-columns: 1fr !important;
+        }
+
+        .filter-wrapper h3 {
+            font-size: 0.98rem;
+            white-space: normal;
+        }
+
+        .page-card > div:nth-of-type(2) > div:first-child {
+            align-items: flex-start !important;
+            flex-direction: column !important;
+        }
+
+        .page-card > div:nth-of-type(2) table {
+            min-width: 860px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .filter-wrapper h3 {
+            font-size: 0.98rem;
+        }
+
+        .page-card {
+            padding: 4px !important;
+        }
+
+        .page-card > div:nth-of-type(2) table {
+            min-width: 720px;
+        }
+    }
+</style>

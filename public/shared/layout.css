@@ -1,0 +1,196 @@
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+}
+
+html, body {
+    height: 100%;
+    background-color: #0d1b3e;
+    overflow: hidden;
+}
+
+/* Khung Dashboard tổng */
+.db { 
+    background: #0d1b3e; 
+    color: #fff; 
+    font-family: 'Segoe UI', sans-serif; 
+    height: 100vh; 
+    width: 100vw;  
+    display: flex; 
+    flex-direction: column; 
+}
+
+/* Header */
+.db-header { 
+    background: linear-gradient(90deg, #1a2e6e 0%, #1e3a8a 100%); 
+    padding: 12px 18px; 
+    display: flex; 
+    align-items: center; 
+    gap: 14px; 
+    border-bottom: 1px solid #2d4a9e; 
+    flex-shrink: 0;
+}
+
+/* THÊM ĐOẠN NÀY VÀO FILE CSS */
+.db-logo-img {
+    height: 40px;          /* Chiều cao tự động cân đối với thanh Header */
+    width: auto;           /* Tự động co giãn chiều rộng theo tỷ lệ ảnh gốc */
+    object-fit: contain;   /* Đảm bảo ảnh logo không bị méo hay biến dạng */
+    flex-shrink: 0;        /* Không cho logo bị bóp nhỏ khi màn hình thu hẹp */
+}
+
+.db-title { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; color: #fff; }
+.db-title-sub { color: #93c5fd; font-size: 13px; }
+.db-selects { display: flex; gap: 10px; margin-left: auto; }
+
+.db-select { 
+    background: #1e3a8a; border: 1px solid #3b5dd4; color: #fff; 
+    padding: 6px 12px; border-radius: 5px; font-size: 12px; 
+    display: flex; align-items: center; gap: 6px; cursor: pointer; 
+}
+
+.db-select i { font-size: 13px; color: #93c5fd; }
+.db-select-label { font-size: 12px; color: #93c5fd; align-self: center; }
+
+.db-subtitle { 
+    background: #162259; padding: 8px 18px; font-size: 12px; color: #93c5fd; 
+    font-style: italic; border-bottom: 1px solid #1e3a8a; flex-shrink: 0;
+}
+
+/* Phần bao bọc các trang con - lấy hết không gian trống */
+.db-body-wrapper {
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+/* --- QUẢN LÝ ẨN/HIỆN TRANG (CORE) --- */
+.page-content {
+    display: none !important; /* Ẩn toàn bộ mặc định */
+    width: 100%;
+    height: 100%;
+}
+
+/* Kích hoạt chế độ Layout Grid cho duy nhất Trang Dashboard khi Active */
+#page-dashboard.active-page {
+    display: grid !important;
+}
+
+/* Kích hoạt chế độ hiển thị chuẩn cho các trang cấu trúc thông thường */
+.page-content.fallback-page-style.active-page {
+    display: flex !important;
+}
+
+/* --- LAYOUT TRANG 1 (DASHBOARD) --- */
+.db-body { 
+    grid-template-columns: 180px 1fr 1fr; 
+    height: 100%;
+}
+
+.db-kpis { 
+    padding: 12px; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid #1e3a8a; 
+}
+
+.kpi-card { 
+    background: #162259; border-radius: 7px; padding: 12px; border: 1px solid #1e3a8a; 
+    flex: 1; display: flex; flex-direction: column; justify-content: center; 
+}
+
+.kpi-val { font-size: 24px; font-weight: 700; color: #f97316; }
+.kpi-lbl { font-size: 11px; color: #93c5fd; margin-top: 4px; }
+
+.db-center, .db-right { 
+    display: flex; flex-direction: column; border-right: 1px solid #1e3a8a; overflow: hidden;
+}
+
+.panel { 
+    padding: 14px; border-bottom: 1px solid #1e3a8a; display: flex; flex-direction: column; flex: 1; 
+}
+
+.panel-title { color: #f97316; font-size: 13px; font-weight: 600; text-align: center; margin-bottom: 2px; }
+.panel-sub { color: #93c5fd; font-size: 11px; font-style: italic; text-align: center; margin-bottom: 10px; }
+
+.chart-placeholder { 
+    background: #162259; border-radius: 6px; border: 1px dashed #2d4a9e; 
+    display: flex; align-items: center; justify-content: center; color: #3b5dd4; font-size: 12px; 
+    flex: 1; min-height: 60px;
+}
+
+.chart-placeholder-text { color: #2d4a9e; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+.chart-placeholder-text i { font-size: 18px; }
+.chart-timeline { display: flex; gap: 4px; margin-top: 6px; flex-shrink: 0; }
+.chart-timeline span { font-size: 10px; color: #3b5dd4; }
+.chart-timeline .timeline-end { margin-left: auto; }
+.chart-legends { display: flex; gap: 14px; margin-bottom: 8px; flex-shrink: 0; }
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-item span { font-size: 10px; color: #93c5fd; }
+.dot-blue { width: 10px; height: 10px; border-radius: 50%; background: #60a5fa; }
+.dot-orange { width: 10px; height: 10px; border-radius: 50%; background: #f97316; }
+
+/* Thống kê Quốc gia */
+.panel-country-header { 
+    display: grid; grid-template-columns: 1fr 1fr 1fr; font-size: 11px; font-weight: 700; 
+    color: #fff; padding: 6px 8px; border-bottom: 1px solid #1e3a8a; 
+}
+
+.country-row { 
+    display: grid; grid-template-columns: 1fr 1fr 1fr; font-size: 11px; padding: 6px 8px; 
+    border-bottom: 1px solid #162259; align-items: center; flex: 1; 
+}
+
+.country-name { color: #93c5fd; }
+.country-bar-wrap { display: flex; align-items: center; gap: 4px; width: 100%; }
+.country-bar { height: 10px; border-radius: 2px; }
+.bar-blue { width: 80%; background: #2563eb; }
+.bar-orange-short { width: 15%; background: #f97316; }
+.bar-orange-shorter { width: 10%; background: #f97316; }
+.bar-blue-shortest { width: 8%; background: #2563eb; }
+.country-var-pos { color: #22d3ee; font-size: 11px; text-align: right; }
+.country-var-neg { color: #f97316; font-size: 11px; text-align: right; }
+.country-total { 
+    display: grid; grid-template-columns: 1fr 1fr 1fr; font-size: 11px; font-weight: 700; 
+    padding: 8px 8px; border-top: 1px solid #3b5dd4; color: #fff; 
+}
+.txt-cyan-right { color: #38bdf8; text-align: right; }
+.txt-orange { color: #f97316; }
+
+/* STYLE CHO CÁC TRANG PHỤ (Bản đồ, Cấu hình, Người dùng,...) */
+.fallback-page-style {
+    flex-direction: column;
+    padding: 30px;
+    gap: 20px;
+}
+.fallback-page-style h2 {
+    color: #f97316;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.dummy-component-view {
+    flex: 1;
+    border: 1px dashed #3b5dd4;
+    background-color: #162259;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #93c5fd;
+    font-style: italic;
+}
+
+/* Tabs Navigation dưới cùng (Footer) */
+.db-footer { 
+    display: grid; grid-template-columns: repeat(7, 1fr); background: #0d1b3e; 
+    border-top: 2px solid #1e3a8a; flex-shrink: 0; 
+}
+
+.footer-tab { 
+    padding: 14px 4px; text-align: center; font-size: 11px; font-weight: 700; 
+    letter-spacing: 0.3px; color: #fff; background: #1a3a6e; cursor: pointer; 
+    border-right: 1px solid #0d1b3e; transition: background 0.15s; 
+}
+.footer-tab:hover { background: #2563eb; }
+.footer-tab.active { background: #f97316; color: #fff; }
