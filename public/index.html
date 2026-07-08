@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bảng Điều Khiển Giám Sát IoT Toàn Diện</title>
+  <link rel="icon" href="data:,">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-6 space-y-6">
+
+  <div class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-md border border-slate-200">
+    <div class="flex justify-between items-center mb-6 border-b pb-4">
+      <div>
+        <h2 class="text-2xl font-bold text-slate-800">Ma Trận Ánh Xạ Tag & Cấu Hình Ngưỡng Cảnh Báo</h2>
+        <p class="text-xs text-slate-500 mt-1">* Sắp xếp tự động: Trạm nhận tag ánh xạ đưa lên đầu $\rightarrow$ Trạm thuần gốc đưa xuống dưới (Tất cả xếp theo Alphabet mã ID).</p>
+      </div>
+      <button onclick="resetAndFetch()" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded text-sm font-medium transition shadow-sm">
+        Làm mới ma trận
+      </button>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
+        <thead>
+          <tr class="bg-slate-800 text-white text-sm font-semibold uppercase tracking-wider">
+            <th class="p-3 text-center w-12">STT</th>
+            <th class="p-3 w-32">Trạm Nhận Tag</th>
+            <th class="p-3 w-32">Tên Hiển Thị (Map)</th>
+            <th class="p-3 w-40">Tọa Độ (Lat, Lng)</th>
+            <th class="p-3 w-28 text-center">Trạng Thái</th> 
+            <th class="p-3 w-64">Cấu Hình Ngưỡng Cảnh Báo Gốc & Nhận</th>
+            <th class="p-3 w-32">Trạm Cho (Nguồn)</th>
+            <th class="p-3 w-40">Chọn Tag Ánh Xạ</th>
+            <th class="p-3 text-center w-36">Hành động</th>
+          </tr>
+        </thead>
+        <tbody id="dynamicMappingTable" class="divide-y divide-gray-200 text-sm text-gray-700">
+          <tr>
+            <td colspan="9" class="p-4 text-center italic text-gray-400">Đang tải cấu trúc dữ liệu trạm từ hệ thống...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-md border border-slate-200">
+    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+      📊 Đồ Thị Lịch Sử Thông Số Trạm
+    </h3>
+    
+    <!-- ///////////////////////////////////////////////////////////////////////////////////////////// -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 text-xs font-medium"> <div>
+        <label class="block text-slate-600 mb-1 font-semibold">Chọn Trạm Nhận:</label>
+        <select id="chartStationSelect" onchange="onChartStationChange()" class="w-full p-2 border rounded bg-white text-gray-700 focus:border-indigo-500 focus:outline-none"></select>
+      </div>
+      <div>
+        <label class="block text-slate-600 mb-1 font-semibold">Chọn Tag Thông Số:</label>
+        <select id="chartTagSelect" class="w-full p-2 border rounded bg-white text-gray-700 focus:border-indigo-500 focus:outline-none"></select>
+      </div>
+      <div>
+        <label class="block text-slate-600 mb-1 font-semibold">Chu kỳ dữ liệu:</label>
+        <select id="chartIntervalSelect" class="w-full p-2 border rounded bg-white text-gray-700 focus:border-indigo-500 focus:outline-none font-bold text-indigo-600">
+          <option value="1">1 Phút (Thô)</option>
+          <option value="5" selected>5 Phút (Chuẩn)</option>
+          <option value="15">15 Phút</option>
+          <option value="30">30 Phút</option>
+          <option value="60">1 Giờ</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-slate-600 mb-1 font-semibold">Từ ngày (00:00 hôm nay):</label>
+        <input type="datetime-local" id="chartStartTime" class="w-full p-2 border rounded text-gray-700 focus:border-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label class="block text-slate-600 mb-1 font-semibold">Đến ngày (Hiện tại):</label>
+        <input type="datetime-local" id="chartEndTime" class="w-full p-2 border rounded text-gray-700 focus:border-indigo-500 focus:outline-none">
+      </div>
+    </div>
+    <!-- ///////////////////////////////////////////////////////////////////////////////////////////// -->    
+    
+    <button onclick="loadLineChart()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-5 py-2 rounded shadow transition">
+      Xem Đồ Thị Lịch Sử
+    </button>
+
+    <div class="mt-6 relative h-96 bg-slate-50 rounded border p-2">
+      <canvas id="myLineChart"></canvas>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-md border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="md:col-span-2 space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="text-lg font-bold text-slate-800">🤖 Cấu Hình Hệ Thống Cảnh Báo Chung</h3>
+        <label class="inline-flex items-center cursor-pointer gap-2">
+          <span class="text-xs font-bold text-slate-600">Trạng thái cảnh báo:</span>
+          <select id="tele_enabled" class="p-1 border rounded text-xs font-bold bg-slate-50 focus:outline-none">
+            <option value="1">🟢 KÍCH HOẠT</option>
+            <option value="0">🔴 TẮT</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Telegram Bot Token:</label>
+          <input type="text" id="tele_bot_token" class="w-full p-2 border rounded text-xs focus:outline-none focus:border-indigo-500" placeholder="123456789:ABCdefGhI...">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Telegram Chat ID (Group/User):</label>
+          <input type="text" id="tele_chat_id" class="w-full p-2 border rounded text-xs focus:outline-none focus:border-indigo-500" placeholder="-100123456789">
+        </div>
+      </div>
+    </div>
+    <div class="space-y-4">
+      <h3 class="text-lg font-bold text-slate-800 border-b pb-2">⏱️ Cấu Cấu Hình Chu Kỳ</h3>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-1">Timeout Sập Mạng (Phút):</label>
+          <input type="number" id="tele_global_timeout" class="w-full p-2 border rounded text-xs focus:outline-none font-bold text-center bg-amber-50" value="5">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-1">Thời gian gửi lặp lại (Phút):</label>
+          <input type="number" id="tele_silent_duration" class="w-full p-2 border rounded text-xs focus:outline-none font-bold text-center" value="30">
+        </div>
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button onclick="saveTelegramConfig()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded shadow transition w-full">Lưu Cấu Hình</button>
+        <button onclick="testTelegram()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-2 rounded transition">Gửi Test</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let overviewData = [];
+    let selectedSourcesMap = {};
+    let chartInstance = null;
+    let globalTimeoutMinutes = 5; // Biến lưu trữ cục bộ mốc timeout hệ thống để tính Online/Offline trên UI
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+      }
+    });
+
+    // Khởi tạo hệ thống đồng bộ khi load trang
+    document.addEventListener("DOMContentLoaded", async () => {
+      initDefaultTimeFilters();
+      await loadTelegramConfig(); // Load cái này trước để lấy mốc globalTimeoutMinutes cho hàm render
+      await fetchOverview();
+    });
+
+    function initDefaultTimeFilters() {
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      const toLocalISO = (date) => {
+        const tzOffset = date.getTimezoneOffset() * 60000;
+        return (new Date(date.getTime() - tzOffset)).toISOString().slice(0, 16);
+      };
+      document.getElementById('chartStartTime').value = toLocalISO(startOfToday);
+      document.getElementById('chartEndTime').value = toLocalISO(now);
+    }
+
+    function resetAndFetch() {
+      selectedSourcesMap = {};
+      fetchOverview();
+    }
+
+    function getRelativeTimeString(currentTsStr) {
+      if (!currentTsStr) return 'Không có dữ liệu';
+      const diffMs = Date.now() - new Date(currentTsStr).getTime();
+      const diffSecs = Math.floor(diffMs / 1000);
+      
+      if (diffSecs < 60) return 'Vừa xong';
+      const diffMins = Math.floor(diffSecs / 60);
+      if (diffMins < 60) return `${diffMins} phút trước`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours} giờ trước`;
+      return new Date(currentTsStr).toLocaleDateString('vi-VN');
+    }
+
+    async function fetchOverview() {
+      const tbody = document.getElementById('dynamicMappingTable');
+      try {
+        const response = await fetch('/api/overview/latest');
+        const result = await response.json();
+        if (result.success && Array.isArray(result.data)) {
+          overviewData = result.data;
+          
+          overviewData.forEach(station => {
+            const targetId = station.logger_id;
+            if (!selectedSourcesMap[targetId] && station.tags) {
+              const mappedTag = Object.values(station.tags).find(t => t.is_mapped === 1);
+              if (mappedTag) selectedSourcesMap[targetId] = mappedTag.original_sender;
+            }
+          });
+          
+          renderMappingTable();
+          syncChartDropdowns();
+        }
+      } catch (error) {
+        tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-red-500 font-medium bg-red-50">Lỗi kết nối: ${error.message}</td></tr>`;
+      }
+    }
+
+    function hasMappedTags(station) {
+      if (!station.tags) return false;
+      return Object.values(station.tags).some(tag => tag.is_mapped === 1);
+    }
+
+    function renderMappingTable() {
+      const tbody = document.getElementById('dynamicMappingTable');
+      tbody.innerHTML = '';
+
+      if (overviewData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-gray-400 italic">Không tìm thấy dữ liệu logger khả dụng.</td></tr>`;
+        return;
+      }
+
+      const activeSourceIds = Object.values(selectedSourcesMap).filter(id => id !== "");
+      const filteredTargets = overviewData.filter(item => !activeSourceIds.includes(item.logger_id));
+
+      filteredTargets.sort((a, b) => {
+        const aHasMap = hasMappedTags(a) ? 1 : 0;
+        const bHasMap = hasMappedTags(b) ? 1 : 0;
+        if (aHasMap !== bHasMap) return bHasMap - aHasMap; 
+        return a.logger_id.localeCompare(b.logger_id);
+      });
+
+      filteredTargets.forEach((targetStation, index) => {
+        const targetId = targetStation.logger_id;
+        const savedSourceId = selectedSourcesMap[targetId] || "";
+        const isCurrentlyMappedStation = hasMappedTags(targetStation);
+
+        const networkDelaySecs = (targetStation.current_ts && targetStation.data_ts) 
+          ? Math.floor((new Date(targetStation.current_ts).getTime() - new Date(targetStation.data_ts).getTime()) / 1000)
+          : 0;
+
+        const delayMinutes = Math.floor(networkDelaySecs / 60);
+        const delayString = delayMinutes > 0 ? `(API trễ ${delayMinutes}p)` : '(Thời gian thực)';
+        const isOnline = delayMinutes <= globalTimeoutMinutes;
+
+        const tr = document.createElement('tr');
+        tr.id = `row-${targetId}`;
+        tr.className = `transition-all duration-500 align-top hover:bg-slate-50 ${isCurrentlyMappedStation ? 'bg-orange-50/10' : ''}`;
+
+        tr.innerHTML = `
+          <td class="p-3 text-center font-medium text-gray-500 border-r">${index + 1}</td>
+          <td class="p-3 font-semibold text-slate-700 border-r bg-green-50/20 break-all">${targetId}</td>
+          <td class="p-3 border-r"><input type="text" id="displayName_${targetId}" value="${targetStation.display_name || ''}" placeholder="Tên trạm..." class="w-full p-1 border rounded text-xs focus:outline-none focus:border-indigo-500 font-medium bg-white"></td>
+          <td class="p-3 border-r space-y-1">
+            <div class="flex items-center gap-1"><span class="text-[10px] text-gray-400 font-bold w-6">LAT:</span><input type="number" step="any" id="lat_${targetId}" value="${targetStation.lat !== null ? targetStation.lat : ''}" placeholder="Vĩ độ" class="w-full p-0.5 border rounded text-xs focus:border-indigo-500 bg-white"></div>
+            <div class="flex items-center gap-1"><span class="text-[10px] text-gray-400 font-bold w-6">LNG:</span><input type="number" step="any" id="lng_${targetId}" value="${targetStation.lng !== null ? targetStation.lng : ''}" placeholder="Kinh độ" class="w-full p-0.5 border rounded text-xs focus:border-indigo-500 bg-white"></div>
+          </td>
+          
+          <td class="p-3 border-r text-center font-medium bg-slate-50/30">
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold shadow-sm ${isOnline ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'}">
+              ${isOnline ? '🟢 Online' : '🔴 Offline'}
+            </span>
+            <div class="text-[10px] text-slate-500 mt-1.5 font-semibold">
+              Hứng: ${getRelativeTimeString(targetStation.current_ts)}
+            </div>
+            <div class="text-[9px] mt-0.5 font-bold ${isOnline ? 'text-amber-600' : 'text-red-600 animate-pulse'}">
+              ${delayString}
+            </div>
+          </td>
+        `;
+
+        const tdTargetTags = document.createElement('td');
+        tdTargetTags.className = "p-3 border-r space-y-2 bg-slate-50/50";
+        if (targetStation.tags) {
+          Object.keys(targetStation.tags).forEach(tagKey => {
+            const tag = targetStation.tags[tagKey];
+            const isMapped = tag.is_mapped === 1;
+            const itemBlock = document.createElement('div');
+            itemBlock.className = "p-1.5 bg-white border border-gray-200 rounded shadow-sm space-y-1 row-tag-threshold-container";
+            itemBlock.setAttribute('data-tag-key', tagKey);
+            itemBlock.innerHTML = `
+              <div class="flex justify-between items-center text-xs border-b pb-1 mb-1 font-semibold">
+                <span class="${isMapped ? 'text-orange-700' : 'text-slate-700'}">${tagKey} ${isMapped ? `(←${tag.original_sender})` : '(Gốc)'}</span>
+                <label class="inline-flex items-center cursor-pointer scale-90">
+                  <input type="checkbox" id="thresholdEnable_${targetId}_${tagKey}" ${tag.threshold_enabled ? 'checked' : ''} class="sr-only peer">
+                  <div class="w-7 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-red-500 relative"></div>
+                </label>
+              </div>
+              <div class="grid grid-cols-2 gap-1.5">
+                <div class="flex items-center gap-1"><span class="text-[9px] text-gray-400 font-bold">Min:</span><input type="number" step="any" id="minTh_${targetId}_${tagKey}" value="${tag.min_value !== null ? tag.min_value : ''}" class="w-full p-0.5 border border-gray-200 rounded text-[11px] text-center" placeholder="-"></div>
+                <div class="flex items-center gap-1"><span class="text-[9px] text-gray-400 font-bold">Max:</span><input type="number" step="any" id="maxTh_${targetId}_${tagKey}" value="${tag.max_value !== null ? tag.max_value : ''}" class="w-full p-0.5 border border-gray-200 rounded text-[11px] text-center" placeholder="-"></div>
+              </div>
+            `;
+            tdTargetTags.appendChild(itemBlock);
+          });
+        } else {
+          tdTargetTags.innerHTML = '<span class="text-gray-400 italic text-xs">Trạm chưa có tag</span>';
+        }
+        tr.appendChild(tdTargetTags);
+
+        const tdSourceSelect = document.createElement('td');
+        tdSourceSelect.className = "p-3 border-r bg-blue-50/30";
+        const select = document.createElement('select');
+        select.className = "w-full p-1.5 border border-gray-300 rounded text-xs bg-white font-medium";
+        select.innerHTML = '<option value="">-- Chọn Trạm Cho --</option>';
+        overviewData.forEach(item => {
+          if (item.logger_id !== targetId) {
+            const opt = document.createElement('option');
+            opt.value = item.logger_id; opt.textContent = item.logger_id;
+            if (item.logger_id === savedSourceId) opt.selected = true;
+            select.appendChild(opt);
+          }
+        });
+        select.onchange = () => {
+          selectedSourcesMap[targetId] = select.value;
+          renderMappingTable();
+        };
+        tdSourceSelect.appendChild(select);
+        tr.appendChild(tdSourceSelect);
+
+        const tdSourceTags = document.createElement('td');
+        tdSourceTags.className = "p-3 border-r bg-blue-50/10";
+        const tagsContainer = document.createElement('div');
+        tagsContainer.id = `sourceTagsContainer_${targetId}`;
+        tagsContainer.className = "space-y-1 max-h-48 overflow-y-auto";
+        tdSourceTags.appendChild(tagsContainer);
+        tr.appendChild(tdSourceTags);
+        loadSourceTagsForRow(savedSourceId, targetId, tagsContainer);
+
+        const tdAction = document.createElement('td');
+        tdAction.className = "p-3 text-center space-y-2";
+        tdAction.innerHTML = `
+          <button onclick="saveRowMapping('${targetId}', '${select.value}', this.parentElement.parentElement)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs px-3 py-1.5 rounded shadow transition w-full block">
+            💾 Lưu Hàng
+          </button>
+          <button onclick="deleteStation('${targetId}')" class="bg-red-500 hover:bg-red-600 text-white font-medium text-xs px-3 py-1.5 rounded shadow transition w-full block">
+            🗑️ Xóa Trạm
+          </button>
+        `;
+        tr.appendChild(tdAction);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function loadSourceTagsForRow(sourceLoggerId, targetStationId, container) {
+      container.innerHTML = '';
+      if (!sourceLoggerId) {
+        container.innerHTML = '<span class="text-gray-400 italic text-xs">Chọn trạm cho...</span>';
+        return;
+      }
+      const sourceLogger = overviewData.find(item => item.logger_id === sourceLoggerId);
+      const targetStation = overviewData.find(item => item.logger_id === targetStationId);
+
+      if (sourceLogger && sourceLogger.tags) {
+        Object.keys(sourceLogger.tags).forEach(tagKey => {
+          const tagInfo = sourceLogger.tags[tagKey];
+          if (tagInfo.is_mapped === 0) {
+            const isAlreadyMapped = targetStation && targetStation.tags && targetStation.tags[tagKey] && 
+                                    targetStation.tags[tagKey].is_mapped === 1 && 
+                                    targetStation.tags[tagKey].original_sender === sourceLoggerId;
+
+            const label = document.createElement('label');
+            label.className = "flex items-center justify-between p-1 bg-white hover:bg-gray-50 border border-gray-200 rounded text-xs cursor-pointer";
+            label.innerHTML = `
+              <div class="flex items-center gap-1.5"><input type="checkbox" name="sourceTags_${targetStationId}" value="${tagKey}" ${isAlreadyMapped ? 'checked' : ''} class="rounded text-indigo-600"><span class="font-medium text-gray-700">${tagKey}</span></div>
+              <span class="text-[10px] text-gray-400">V: ${tagInfo.value}</span>
+            `;
+            container.appendChild(label);
+          }
+        });
+        if (container.children.length === 0) container.innerHTML = '<span class="text-red-400 italic text-xs">Trạm cho hết tag gốc</span>';
+      }
+    }
+
+    async function saveRowMapping(targetStationId, sourceLoggerId, rowElement) {
+      const display_name = document.getElementById(`displayName_${targetStationId}`).value;
+      const lat = document.getElementById(`lat_${targetStationId}`).value;
+      const lng = document.getElementById(`lng_${targetStationId}`).value;
+
+      const checkboxes = document.querySelectorAll(`input[name="sourceTags_${targetStationId}"]:checked`);
+      const selectedTags = Array.from(checkboxes).map(cb => cb.value);
+
+      const thresholdContainers = rowElement.querySelectorAll('.row-tag-threshold-container');
+      const alert_thresholds = [];
+
+      thresholdContainers.forEach(container => {
+        const tagKey = container.getAttribute('data-tag-key');
+        const enabled = document.getElementById(`thresholdEnable_${targetStationId}_${tagKey}`).checked;
+        const min_value = document.getElementById(`minTh_${targetStationId}_${tagKey}`).value;
+        const max_value = document.getElementById(`maxTh_${targetStationId}_${tagKey}`).value;
+        alert_thresholds.push({ tag_key: tagKey, enabled, min_value, max_value });
+      });
+
+      try {
+        const response = await fetch('/api/stations/mappings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source: "WEB_MATRIX_CONFIG",
+            source_logger_id: sourceLoggerId && sourceLoggerId !== "" ? sourceLoggerId : null, 
+            source_tags: sourceLoggerId ? selectedTags : [],     
+            target_station_id: targetStationId, 
+            display_name, lat, lng, alert_thresholds
+          })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          Toast.fire({ icon: 'success', title: `Đã cập nhật cấu hình trạm [${targetStationId}]` });
+          await fetchOverview(); 
+        }
+      } catch (error) {
+        Toast.fire({ icon: 'error', title: 'Lỗi đồng bộ cấu hình' });
+      }
+    }
+
+    async function deleteStation(stationId) {
+      try {
+        const response = await fetch(`/api/stations/${stationId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          Toast.fire({ icon: 'success', title: `Đã xóa sạch trạm [${stationId}] khỏi hệ thống` });
+          const targetRow = document.getElementById(`row-${stationId}`);
+          if (targetRow) {
+            targetRow.style.opacity = "0";
+            targetRow.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+            setTimeout(() => { resetAndFetch(); }, 500);
+          } else {
+            resetAndFetch();
+          }
+        } else {
+          Toast.fire({ icon: 'error', title: result.message || 'Xóa trạm thất bại' });
+        }
+      } catch (error) {
+        Toast.fire({ icon: 'error', title: 'Mất kết nối tới máy chủ' });
+      }
+    }
+
+    // --- ENGINE ĐỒ THỊ (LINE CHART) ---
+    function syncChartDropdowns() {
+      const stationSelect = document.getElementById('chartStationSelect');
+      const currentSelected = stationSelect.value;
+      
+      stationSelect.innerHTML = '<option value="">-- Chọn Trạm --</option>';
+      overviewData.forEach(station => {
+        const opt = document.createElement('option');
+        opt.value = station.logger_id;
+        opt.textContent = `${station.logger_id} ${station.display_name ? `(${station.display_name})` : ''}`;
+        stationSelect.appendChild(opt);
+      });
+      if (currentSelected) stationSelect.value = currentSelected;
+      else if (overviewData.length > 0) {
+        stationSelect.selectedIndex = 1;
+      }
+      onChartStationChange();
+    }
+
+    function onChartStationChange() {
+      const stationId = document.getElementById('chartStationSelect').value;
+      const tagSelect = document.getElementById('chartTagSelect');
+      tagSelect.innerHTML = '<option value="ALL">-- Toàn bộ Tag (Mặc định) --</option>';
+      
+      if (!stationId) return;
+      const targetStation = overviewData.find(s => s.logger_id === stationId);
+      if (targetStation && targetStation.tags) {
+        Object.keys(targetStation.tags).forEach(tagKey => {
+          const opt = document.createElement('option');
+          opt.value = tagKey; opt.textContent = tagKey;
+          tagSelect.appendChild(opt);
+        });
+      }
+    }
+
+    // 🟢 ĐÃ KHÔI PHỤC VÀ FIX CHU KỲ LỌC: Hàm loadLineChart() gọi khi bấm nút Xem Đồ Thị
+    async function loadLineChart() {
+      const stationId = document.getElementById('chartStationSelect').value;
+      const selectedTag = document.getElementById('chartTagSelect').value;
+      const startTime = document.getElementById('chartStartTime').value;
+      const endTime = document.getElementById('chartEndTime').value;
+      const intervalMinutes = document.getElementById('chartIntervalSelect').value;
+
+      if (!stationId) { 
+        Toast.fire({ icon: 'info', title: 'Vui lòng chọn trạm cần xem đồ thị' });
+        return; 
+      }
+
+      const targetStation = overviewData.find(s => s.logger_id === stationId);
+      if (!targetStation) return;
+
+      let tagsToFetch = selectedTag === "ALL" ? Object.keys(targetStation.tags || {}) : [selectedTag];
+      if (tagsToFetch.length === 0) {
+        Toast.fire({ icon: 'warning', title: 'Trạm chưa có dữ liệu lịch sử' });
+        return; 
+      }
+
+      const startParam = startTime ? startTime.replace("T", " ") + ":00" : "";
+      const endParam = endTime ? endTime.replace("T", " ") + ":00" : "";
+
+      try {
+        const fetchPromises = tagsToFetch.map(tagKey => {
+          let url = `/api/overview/history-chart?station_id=${stationId}&tag_key=${tagKey}&interval_mins=${intervalMinutes}`;
+          if (startParam) url += `&start_time=${encodeURIComponent(startParam)}`;
+          if (endParam) url += `&end_time=${encodeURIComponent(endParam)}`;
+          return fetch(url).then(res => res.json());
+        });
+
+        const results = await Promise.all(fetchPromises);
+        const datasets = [];
+        let globalLabels = [];
+
+        results.forEach((res, index) => {
+          const currentTagKey = res.tag_key || tagsToFetch[index];
+          if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+            if (globalLabels.length === 0) {
+              globalLabels = res.data.map(item => new Date(item.timestamp).toLocaleString('vi-VN'));
+            }
+            const colors = ['rgb(79, 70, 229)', 'rgb(220, 38, 38)', 'rgb(5, 150, 105)', 'rgb(217, 119, 6)', 'rgb(124, 58, 237)'];
+            const color = colors[index % colors.length];
+            datasets.push({
+              label: String(currentTagKey).toUpperCase(), 
+              data: res.data.map(item => item.value),
+              borderColor: color,
+              backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.1)'), 
+              borderWidth: 2, tension: 0.15, fill: selectedTag !== "ALL"
+            });
+          }
+        });
+
+        if (datasets.length === 0) {
+          Toast.fire({ icon: 'info', title: 'Không tìm thấy dữ liệu trong mốc giờ này' });
+          if (chartInstance) chartInstance.destroy();
+          return;
+        }
+
+        if (chartInstance) chartInstance.destroy();
+        const ctx = document.getElementById('myLineChart').getContext('2d');
+        chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: { labels: globalLabels, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false }
+          }
+        });
+      } catch (error) {
+        Toast.fire({ icon: 'error', title: 'Lỗi đồng bộ sơ đồ' });
+      }
+    }
+
+    // --- ĐOẠN CODE QUẢN LÝ CẤU HÌNH TELEGRAM DÙNG CHUNG ---
+    async function loadTelegramConfig() {
+      try {
+        const res = await fetch('/api/alerts/config');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            const config = data[0];
+            document.getElementById('tele_bot_token').value = config.bot_token || '';
+            document.getElementById('tele_chat_id').value = config.chat_id || '';
+            document.getElementById('tele_silent_duration').value = config.alert_interval_minutes || 30;
+            document.getElementById('tele_global_timeout').value = config.global_offline_timeout_mins || 5;
+            document.getElementById('tele_enabled').value = config.enabled !== undefined ? config.enabled : 1;
+            
+            // Đồng bộ biến toàn cục để UI vẽ màu xanh/đỏ (Online/Offline) chuẩn xác theo cấu hình mới
+            if (typeof globalTimeoutMinutes !== 'undefined') {
+              globalTimeoutMinutes = config.global_offline_timeout_mins || 5;
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Không thể tải cấu hình Telegram:', err);
+      }
+    }
+
+    async function saveTelegramConfig() {
+      const bot_token = document.getElementById('tele_bot_token').value.trim();
+      const chat_id = document.getElementById('tele_chat_id').value.trim();
+      const alert_interval_minutes = parseInt(document.getElementById('tele_silent_duration').value) || 30;
+      const global_offline_timeout_mins = parseInt(document.getElementById('tele_global_timeout').value) || 5;
+      const enabled = parseInt(document.getElementById('tele_enabled').value);
+
+      if (!bot_token || !chat_id) {
+        Swal.fire('Thất bại', 'Vui lòng điền đầy đủ Token và Chat ID!', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/alerts/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bot_token, chat_id, alert_interval_minutes, global_offline_timeout_mins, enabled })
+        });
+
+        if (res.ok) {
+          Swal.fire('Thành công', 'Đã lưu cấu hình và đồng bộ thời gian Timeout sập mạng chung!', 'success');
+          await loadTelegramConfig();
+          if (typeof fetchOverview === 'function') fetchOverview(); // Cập nhật lại màu sắc bảng ma trận ngay lập tức
+        } else {
+          Swal.fire('Lỗi', 'Không thể lưu cấu hình hệ thống.', 'error');
+        }
+      } catch (err) {
+        Swal.fire('Lỗi kết nối', err.message, 'error');
+      }
+    }
+
+    async function testTelegram() {
+      const bot_token = document.getElementById('tele_bot_token').value.trim();
+      const chat_id = document.getElementById('tele_chat_id').value.trim();
+      if (!bot_token || !chat_id) {
+        Swal.fire('Nhắc nhở', 'Hãy điền Token và Chat ID trước khi test!', 'warning');
+        return;
+      }
+      Swal.fire({ title: 'Đang gửi thử...', didOpen: () => Swal.showLoading() });
+      try {
+        const res = await fetch('/api/alerts/test-connection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bot_token, chat_id })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          Swal.fire('Thành công', 'Hệ thống đã gửi một tin nhắn test. Hãy kiểm tra Telegram của bạn!', 'success');
+        } else {
+          Swal.fire('Thất bại', data.error || 'Kiểm tra lỗi kết nối bot!', 'error');
+        }
+      } catch (err) {
+        Swal.fire('Lỗi', err.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

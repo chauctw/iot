@@ -1,0 +1,653 @@
+<div class="matrix-config-context page-card animate-fade-in" style="display: flex; flex-direction: column; gap: 5px; height: 100%; box-sizing: border-box; padding: 5px;">
+    
+    <style>
+        /* 1. Reset thuộc tính ô nhập liệu và select box */
+        .matrix-config-context input, 
+        .matrix-config-context select, 
+        .matrix-config-context textarea {
+            min-height: unset !important;
+            box-sizing: border-box !important;
+        }
+
+        /* 2. ĐẶC TRỊ CHECKBOX: Loại bỏ hoàn toàn min-height 40px, padding và border mặc định */
+        .matrix-config-context input[type="checkbox"] {
+            min-height: unset !important;
+            height: 16px !important;
+            width: 16px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            display: inline-block !important;
+            vertical-align: middle !important;
+        }
+
+        /* 3. Khắc phục nút bấm bị phình to */
+        .matrix-config-context button {
+            min-height: unset !important;
+        }
+
+        /* 4. Reset padding cho table theo đúng inline-style thiết kế */
+        .matrix-config-context table th, 
+        .matrix-config-context table td {
+            padding: unset !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+
+        /* 5. Ẩn nút tăng giảm (spin spinners) trên các ô input number để tránh lệch layout */
+        .matrix-config-context input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .matrix-config-context input[type="number"]::-webkit-outer-spin-button,
+        .matrix-config-context input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+
+    <div id="customToastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+    <div style="background: #fff; padding: 10px 15px; border-radius: 0px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div>
+            <h3 style="margin: 0; color: var(--text-dark); display: flex; align-items: center; gap: 8px; font-size: 1.1rem; font-weight: 700;">
+                <i class="fa-solid fa-gears" style="color: #2563eb;"></i> TRUNG TÂM CẤU HÌNH HỆ THỐNG MẠ TRẬN LOGGER
+            </h3>
+            <p style="margin: 3px 0 0 0; font-size: 0.75rem; color: #64748b; font-style: italic;">
+                * Hệ thống tự động sắp xếp: Trạm nhận tag ánh xạ đưa lên đầu $\rightarrow$ Trạm thuần gốc đưa xuống dưới theo Alphabet.
+            </p>
+        </div>
+        <button onclick="resetAndFetchConfigMatrix()" style="padding: 6px 14px; background: #475569; color: #fff; border: none; border-radius: 0px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+            <i class="fa-solid fa-arrows-rotate"></i> LÀM MỚI MA TRẬN
+        </button>
+    </div>
+
+    <div style="background: #fff; border: 1px solid var(--border-color); border-radius: 0px; padding: 12px; display: flex; flex-direction: column; min-height: 300px; flex: 1;">
+        <div style="overflow-x: auto; overflow-y: auto; flex: 1; border: 1px solid #e2e8f0; border-radius: 0px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.82rem; white-space: nowrap;">
+                <thead style="position: sticky; top: 0; background: #f1f5f9; z-index: 10; box-shadow: 0 1px 0 #cbd5e1;">
+                    <tr style="color: #334155; font-weight: 600;">
+                        <th style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; width: 40px;">STT</th>
+                        <th style="padding: 10px; border: 1px solid #cbd5e1; width: 110px;">Trạm Nhận Tag</th>
+                        <th style="padding: 10px; border: 1px solid #cbd5e1; width: 140px;">Tên Hiển Thị (Map)</th>
+                        <th style="padding: 10px; border: 1px solid #cbd5e1; width: 130px;">Tọa Độ (Lat, Lng)</th>
+                        <th style="padding: 10px; border: 1px solid #cbd5e1; width: 90px; text-align: center;">Trạng Thái</th> 
+                        <th style="padding: 10px; border: 1px solid #cbd5e1; width: 220px;">Cấu Hình Ngưỡng Cảnh Báo Gốc & Nhận</th>
+                        <th style="padding: 10px; border: 1px solid #cbd5e1; width: 120px;">Trạm Cho (Nguồn)</th>
+                        <th style="padding: 10px; border: 1px solid #cbd5e1; width: 150px;">Chọn Tag Ánh Xạ</th>
+                        <th style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; width: 135px;">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="dynamicMappingTable" style="color: #475569;">
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 25px; color: #94a3b8; font-style: italic;">Đang tải cấu trúc ma trận dữ liệu trạm...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div style="background: #fff; border: 1px solid var(--border-color); border-radius: 0px; padding: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <h4 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-robot" style="color: #059669;"></i> CẤU HÌNH TIẾN TRÌNH BOT CẢNH BÁO TELEGRAM
+            </h4>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 0.75rem; font-weight: 600; color: #475569;">Trạng thái hoạt động:</label>
+                <select id="tele_enabled" style="font-size: 0.75rem; padding: 4px 8px; font-weight: 700; border-radius: 0px; border: 1px solid #cbd5e1; outline: none; background: #fff; cursor: pointer;">
+                    <option value="1">🟢 KÍCH HOẠT WORKER</option>
+                    <option value="0">🔴 TẮT TIẾN TRÌNH</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="font-size: 0.75rem; display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 12px; align-items: flex-end;">
+            <div>
+                <label style="display:block; margin-bottom:5px; font-weight:600; color:#475569;">Telegram Bot Token:</label>
+                <input type="text" id="tele_bot_token" placeholder="123456789:ABCdefGhI..." style="width:100%; padding:8px; border-radius:0px; border:1px solid #cbd5e1; outline: none; font-size: 0.8rem;">
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:5px; font-weight:600; color:#475569;">Telegram Chat ID (Nhóm/Cá nhân):</label>
+                <input type="text" id="tele_chat_id" placeholder="-100123456789" style="width:100%; padding:8px; border-radius:0px; border:1px solid #cbd5e1; outline: none; font-size: 0.8rem;">
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:5px; font-weight:600; color:#475569;">Mất Kết Nối Timeout (Phút):</label>
+                <input type="number" id="tele_global_timeout" value="5" style="width:100%; padding:8px; border-radius:0px; border:1px solid #cbd5e1; text-align:center; font-weight:700; background:#fffbeb; outline: none; font-size: 0.8rem;">
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:5px; font-weight:600; color:#475569;">Thời gian lặp lại (Phút):</label>
+                <input type="number" id="tele_silent_duration" value="30" style="width:100%; padding:8px; border-radius:0px; border:1px solid #cbd5e1; text-align:center; font-weight:700; outline: none; font-size: 0.8rem;">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 5px; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
+            <button id="btnTestTele" onclick="testTelegram(this)" style="padding: 8px 18px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 0px; font-weight: 600; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; display: flex; align-items: center; gap: 5px;">
+                <i class="fa-solid fa-paper-plane"></i> GỬI KIỂM TRA (TEST)
+            </button>
+            <button id="btnSaveTele" onclick="saveTelegramConfig(this)" style="padding: 8px 24px; background: #059669; color: #fff; border: none; border-radius: 0px; font-weight: 700; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 5px;">
+                <i class="fa-solid fa-floppy-disk"></i> LƯU THÔNG SỐ HỆ THỐNG
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(() => {
+    let overviewData = [];
+    let selectedSourcesMap = {};
+    let globalTimeoutMinutes = 5; 
+
+    const TAG_LABELS = {
+        'amino': 'Amoni', 'flow': 'Lưu lượng', 'level': 'Mực nước', 'nh4': 'Amoni',
+        'nitrat': 'Nitrat', 'no3': 'Nitrat', 'ph': 'Độ pH', 'tds': 'TDS', 'totalindex': 'Tổng chỉ số'
+    };
+
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('customToastContainer');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        const bg = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#f59e0b';
+        const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-xmark' : 'fa-circle-exclamation';
+
+        toast.style.cssText = `
+            background: ${bg}; color: #fff; padding: 12px 18px; border-radius: 0px;
+            font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15); opacity: 0; transform: translateY(-10px);
+            transition: all 0.3s ease; min-width: 250px;
+        `;
+        toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        }, 10);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-10px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    window.resetAndFetchConfigMatrix = function() {
+        selectedSourcesMap = {};
+        fetchOverview();
+    };
+
+    function getRelativeTimeString(currentTsStr) {
+        if (!currentTsStr) return 'Không có dữ liệu';
+        const diffMs = Date.now() - new Date(currentTsStr).getTime();
+        const diffSecs = Math.floor(diffMs / 1000);
+        if (diffSecs < 60) return 'Vừa xong';
+        const diffMins = Math.floor(diffSecs / 60);
+        if (diffMins < 60) return `${diffMins} phút trước`;
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `${diffHours} giờ trước`;
+        return new Date(currentTsStr).toLocaleDateString('vi-VN');
+    }
+
+    async function fetchOverview() {
+        const tbody = document.getElementById('dynamicMappingTable');
+        try {
+            const response = await fetch('/api/overview/latest');
+            const result = await response.json();
+            if (result.success && Array.isArray(result.data)) {
+                overviewData = result.data;
+                
+                overviewData.forEach(station => {
+                    const targetId = station.logger_id;
+                    if (!selectedSourcesMap[targetId] && station.tags) {
+                        const mappedTag = Object.values(station.tags).find(t => t.is_mapped === 1);
+                        if (mappedTag) selectedSourcesMap[targetId] = mappedTag.original_sender;
+                    }
+                });
+                
+                renderMappingTable();
+            }
+        } catch (error) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:#dc2626; font-weight:600; background:#fef2f2;">Lỗi kết nối API Server: ${error.message}</td></tr>`;
+        }
+    }
+
+    function hasMappedTags(station) {
+        if (!station.tags) return false;
+        return Object.values(station.tags).some(tag => tag.is_mapped === 1);
+    }
+
+    function renderMappingTable() {
+        const tbody = document.getElementById('dynamicMappingTable');
+        tbody.innerHTML = '';
+
+        if (overviewData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:#94a3b8; font-style:italic;">Không tìm thấy dữ liệu cấu hình logger khả dụng.</td></tr>`;
+            return;
+        }
+
+        const activeSourceIds = Object.values(selectedSourcesMap).filter(id => id !== "");
+        const filteredTargets = overviewData.filter(item => !activeSourceIds.includes(item.logger_id));
+
+        filteredTargets.sort((a, b) => {
+            const aHasMap = hasMappedTags(a) ? 1 : 0;
+            const bHasMap = hasMappedTags(b) ? 1 : 0;
+            if (aHasMap !== bHasMap) return bHasMap - aHasMap; 
+            return a.logger_id.localeCompare(b.logger_id);
+        });
+
+        filteredTargets.forEach((targetStation, index) => {
+            const targetId = targetStation.logger_id;
+            const savedSourceId = selectedSourcesMap[targetId] || "";
+            const isCurrentlyMappedStation = hasMappedTags(targetStation);
+
+            const networkDelaySecs = (targetStation.current_ts && targetStation.data_ts) 
+                ? Math.floor((new Date(targetStation.current_ts).getTime() - new Date(targetStation.data_ts).getTime()) / 1000)
+                : 0;
+
+            const delayMinutes = Math.floor(networkDelaySecs / 60);
+            const delayString = delayMinutes > 0 ? `(API trễ ${delayMinutes}p)` : '(Realtime)';
+            const isOnline = delayMinutes <= globalTimeoutMinutes;
+
+            const tr = document.createElement('tr');
+            tr.id = `row-${targetId}`;
+            tr.style.borderBottom = "1px solid #cbd5e1";
+            if (isCurrentlyMappedStation) tr.style.background = "#fffbeb";
+
+            tr.innerHTML = `
+                <td style="padding:10px !important; text-align:center; font-weight:600; color:#64748b; border-right:1px solid #e2e8f0;">${index + 1}</td>
+                <td style="padding:10px !important; font-weight:700; color:#1e293b; border-right:1px solid #e2e8f0; background:rgba(16,185,129,0.05);">${targetId}</td>
+                <td style="padding:10px !important; border-right:1px solid #e2e8f0;"><input type="text" id="displayName_${targetId}" value="${targetStation.display_name || ''}" placeholder="Tên trạm..." style="width:100%; padding:4px 6px; border:1px solid #cbd5e1; border-radius:0px; font-size:0.8rem; min-height:28px !important; height:28px !important;"></td>
+                <td style="padding:10px !important; border-right:1px solid #e2e8f0;">
+                    <div style="display:flex; flex-direction:column; gap:4px; width: 100%;">
+                        <div style="display:flex; align-items:center; gap:4px;"><span style="font-size:9px; color:#94a3b8; font-weight:700; width:22px;">LAT:</span><input type="number" step="any" id="lat_${targetId}" value="${targetStation.lat !== null ? targetStation.lat : ''}" style="width:100%; min-height:20px !important; height:20px !important; padding:2px; border:1px solid #cbd5e1; border-radius:0px; font-size:11px; box-sizing:border-box;"></div>
+                        <div style="display:flex; align-items:center; gap:4px;"><span style="font-size:9px; color:#94a3b8; font-weight:700; width:22px;">LNG:</span><input type="number" step="any" id="lng_${targetId}" value="${targetStation.lng !== null ? targetStation.lng : ''}" style="width:100%; min-height:20px !important; height:20px !important; padding:2px; border:1px solid #cbd5e1; border-radius:0px; font-size:11px; box-sizing:border-box;"></div>
+                    </div>
+                </td>
+                <td style="padding:10px !important; border-right:1px solid #e2e8f0; text-align:center; background:#f8fafc;">
+                    <span style="padding:2px 6px; border-radius:0px; font-size:10px; font-weight:700; display:inline-block; background:${isOnline ? '#dcfce7':'#fee2e2'}; color:${isOnline ? '#166534':'#991b1b'}; border:1px solid ${isOnline?'#bbf7d0':'#fca5a5'}; min-height:unset !important;">
+                        ${isOnline ? '🟢 Online' : '🔴 Offline'}
+                    </span>
+                    <div style="font-size:10px; color:#64748b; margin-top:5px; font-weight:500;">Hứng: ${getRelativeTimeString(targetStation.current_ts)}</div>
+                    <div style="font-size:9px; font-weight:700; margin-top:2px; color:${isOnline ? '#d97706':'#dc2626'}">${delayString}</div>
+                </td>
+            `;
+
+            const tdTargetTags = document.createElement('td');
+            tdTargetTags.style.cssText = "padding:8px !important; border-right:1px solid #e2e8f0; background:#f8fafc;";
+            
+            if (targetStation.tags && Object.keys(targetStation.tags).length > 0) {
+                Object.keys(targetStation.tags).forEach(tagKey => {
+                    const tag = targetStation.tags[tagKey];
+                    const isMapped = tag.is_mapped === 1;
+                    const cleanKey = tagKey.toLowerCase().trim();
+                    const friendlyLabel = TAG_LABELS[cleanKey] || tagKey;
+
+                    let currentValueDisplay = '';
+                    if (tag.value !== null && tag.value !== undefined) {
+                        const parsedVal = parseFloat(tag.value);
+                        currentValueDisplay = parsedVal.toFixed(2).replace('.', ',');
+                    } else {
+                        currentValueDisplay = '-';
+                    }
+
+                    const itemBlock = document.createElement('div');
+                    itemBlock.className = "row-tag-threshold-container";
+                    itemBlock.setAttribute('data-tag-key', tagKey);
+                    itemBlock.style.cssText = "padding:5px; background:#fff; border:1px solid #e2e8f0; border-radius:0px; margin-bottom:4px; box-shadow:0 1px 2px rgba(0,0,0,0.02);";
+                    
+                    itemBlock.innerHTML = `
+                        <div style="display:flex; justify-content: space-between; align-items:center; font-size:11px; font-weight:700; border-bottom:1px dashed #f1f5f9; padding-bottom:3px; margin-bottom:4px; gap: 8px;">
+                            <span style="flex:1; color:${isMapped ? '#c2410c':'#334155'}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                ${friendlyLabel}: <span style="color:#0284c7; font-weight:800;">${currentValueDisplay}</span> ${isMapped ? `(←${tag.original_sender})` : ''}
+                            </span>
+                            <input type="checkbox" id="thresholdEnable_${targetId}_${tagKey}" ${tag.threshold_enabled ? 'checked' : ''} style="cursor:pointer; transform: scale(0.9); margin-left: auto; width:16px; min-width:16px; height:16px; min-height:16px !important; padding:0;">
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <div style="display:flex; align-items:center; gap:2px;"><span style="font-size:9px; color:#94a3b8; font-weight:700;">Min:</span><input type="number" step="any" id="minTh_${targetId}_${tagKey}" value="${tag.min_value !== null ? tag.min_value : ''}" style="width:45px; min-height:18px !important; height:18px !important; padding:1px; border:1px solid #cbd5e1; border-radius:0px; font-size:10px; text-align:center; box-sizing:border-box;"></div>
+                            <div style="display:flex; align-items:center; gap:2px;"><span style="font-size:9px; color:#94a3b8; font-weight:700;">Max:</span><input type="number" step="any" id="maxTh_${targetId}_${tagKey}" value="${tag.max_value !== null ? tag.max_value : ''}" style="width:45px; min-height:18px !important; height:18px !important; padding:1px; border:1px solid #cbd5e1; border-radius:0px; font-size:10px; text-align:center; box-sizing:border-box;"></div>
+                        </div>
+                    `;
+                    tdTargetTags.appendChild(itemBlock);
+                });
+            } else {
+                tdTargetTags.innerHTML = '<span style="color:#94a3b8; font-style:italic; font-size:11px; display:block; text-align:center; padding:10px;">Trạm chưa nạp tag</span>';
+            }
+            tr.appendChild(tdTargetTags);
+
+            const tdSourceSelect = document.createElement('td');
+            tdSourceSelect.style.cssText = "padding:10px !important; border-right:1px solid #e2e8f0; background:rgba(37,99,235,0.02);";
+            
+            const select = document.createElement('select');
+            select.style.cssText = "width:100%; min-height:30px !important; height:30px !important; padding:2px 5px; border:1px solid #cbd5e1; border-radius:0px; font-size:0.8rem; background:#fff; font-weight:500; box-sizing:border-box;";
+            select.innerHTML = '<option value="">-- Chọn Trạm Cho --</option>';
+            overviewData.forEach(item => {
+                if (item.logger_id !== targetId) {
+                    const opt = document.createElement('option');
+                    opt.value = item.logger_id; opt.textContent = item.logger_id;
+                    if (item.logger_id === savedSourceId) opt.selected = true;
+                    select.appendChild(opt);
+                }
+            });
+            select.onchange = () => {
+                selectedSourcesMap[targetId] = select.value;
+                renderMappingTable();
+            };
+            tdSourceSelect.appendChild(select);
+            tr.appendChild(tdSourceSelect);
+
+            const tdSourceTags = document.createElement('td');
+            tdSourceTags.style.cssText = "padding:8px !important; border-right:1px solid #e2e8f0;";
+            
+            const tagsContainer = document.createElement('div');
+            tagsContainer.id = `sourceTagsContainer_${targetId}`;
+            tagsContainer.style.cssText = "display:flex; flex-direction:column; gap:3px; max-h:90px; overflow-y:auto;";
+            tdSourceTags.appendChild(tagsContainer);
+            tr.appendChild(tdSourceTags);
+            loadSourceTagsForRow(savedSourceId, targetId, tagsContainer);
+
+            const tdAction = document.createElement('td');
+            tdAction.style.cssText = "padding:10px !important; text-align:center; border-left:1px solid #e2e8f0;";
+            tdAction.innerHTML = `
+                <div style="display: flex; gap: 6px; justify-content: center; width: 100%;">
+                    <button onclick="saveRowConfigMapping('${targetId}', '${select.value}', this.parentElement.parentElement.parentElement, this)" 
+                            style="flex: 1; min-height:28px !important; height:28px !important; padding: 0 4px; background: #2563eb; color: #fff; border: none; border-radius: 0px; font-size: 11px; font-weight: 700; cursor: pointer; transition: background 0.2s; white-space: nowrap; box-sizing:border-box;">
+                        <i class="fa-solid fa-floppy-disk"></i> LƯU
+                    </button>
+                    <button onclick="deleteConfigStation('${targetId}', this)" 
+                            style="flex: 1; min-height:28px !important; height:28px !important; padding: 0 4px; background: #dc2626; color: #fff; border: none; border-radius: 0px; font-size: 11px; font-weight: 700; cursor: pointer; transition: background 0.2s; white-space: nowrap; box-sizing:border-box;">
+                        <i class="fa-solid fa-trash-can"></i> XÓA
+                    </button>
+                </div>
+            `;
+            tr.appendChild(tdAction);
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    function loadSourceTagsForRow(sourceLoggerId, targetStationId, container) {
+        container.innerHTML = '';
+        if (!sourceLoggerId) {
+            container.innerHTML = '<span style="color:#94a3b8; font-style:italic; font-size:11px;">Chọn trạm cho...</span>';
+            return;
+        }
+        const sourceLogger = overviewData.find(item => item.logger_id === sourceLoggerId);
+        const targetStation = overviewData.find(item => item.logger_id === targetStationId);
+
+        if (sourceLogger && sourceLogger.tags) {
+            Object.keys(sourceLogger.tags).forEach(tagKey => {
+                const tagInfo = sourceLogger.tags[tagKey];
+                if (tagInfo.is_mapped === 0) {
+                    const isAlreadyMapped = targetStation && targetStation.tags && targetStation.tags[tagKey] && 
+                                            targetStation.tags[tagKey].is_mapped === 1 && 
+                                            targetStation.tags[tagKey].original_sender === sourceLoggerId;
+
+                    const cleanKey = tagKey.toLowerCase().trim();
+                    const friendlyName = TAG_LABELS[cleanKey] || tagKey;
+
+                    const label = document.createElement('label');
+                    label.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:3px; background:#fff; border:1px solid #e2e8f0; border-radius:0px; font-size:11px; cursor:pointer;";
+                    label.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="sourceTags_${targetStationId}" value="${tagKey}" ${isAlreadyMapped ? 'checked' : ''} style="width:16px; min-width:16px; height:16px; min-height:16px !important; padding:0; cursor:pointer;"><span style="font-weight:600; color:#334155;">${friendlyName}</span></div>
+                        <span style="font-size:10px; color:#94a3b8;">V: ${tagInfo.value}</span>
+                    `;
+                    container.appendChild(label);
+                }
+            });
+            if (container.children.length === 0) container.innerHTML = '<span style="color:#dc2626; font-style:italic; font-size:11px;">Hết tag gốc</span>';
+        }
+    }
+
+    window.saveRowConfigMapping = async function(targetStationId, sourceLoggerId, rowElement, btnElement) {
+        const display_name = document.getElementById(`displayName_${targetStationId}`).value;
+        const lat = document.getElementById(`lat_${targetStationId}`).value;
+        const lng = document.getElementById(`lng_${targetStationId}`).value;
+
+        const checkboxes = document.querySelectorAll(`input[name="sourceTags_${targetStationId}"]:checked`);
+        const selectedTags = Array.from(checkboxes).map(cb => cb.value);
+
+        const thresholdContainers = rowElement.querySelectorAll('.row-tag-threshold-container');
+        const alert_thresholds = [];
+
+        thresholdContainers.forEach(container => {
+            const tagKey = container.getAttribute('data-tag-key');
+            const enabled = document.getElementById(`thresholdEnable_${targetStationId}_${tagKey}`).checked;
+            const min_value = document.getElementById(`minTh_${targetStationId}_${tagKey}`).value;
+            const max_value = document.getElementById(`maxTh_${targetStationId}_${tagKey}`).value;
+            alert_thresholds.push({ tag_key: tagKey, enabled, min_value, max_value });
+        });
+
+        const oldBtnText = btnElement.innerHTML;
+        btnElement.disabled = true;
+        btnElement.style.background = '#64748b';
+        btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG LƯU';
+
+        try {
+            const response = await fetch('/api/stations/mappings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    source: "WEB_MATRIX_CONFIG",
+                    source_logger_id: sourceLoggerId && sourceLoggerId !== "" ? sourceLoggerId : null, 
+                    source_tags: sourceLoggerId ? selectedTags : [],     
+                    target_station_id: targetStationId, 
+                    display_name, lat, lng, alert_thresholds
+                })
+            });
+
+            const result = await response.json();
+            if (response.ok && result.success) {
+                btnElement.style.background = '#10b981';
+                btnElement.innerHTML = '<i class="fa-solid fa-check"></i> XONG';
+                showToast(`Đã đồng bộ cấu hình [${targetStationId}] thành công!`, 'success');
+                
+                setTimeout(async () => {
+                    await fetchOverview(); 
+                }, 600);
+            } else {
+                btnElement.style.background = '#ef4444';
+                btnElement.innerHTML = '<i class="fa-solid fa-xmark"></i> THẤT BẠI';
+                showToast(`Lỗi lưu hàng: ${result.error || result.message}`, 'error');
+                setTimeout(() => {
+                    btnElement.disabled = false;
+                    btnElement.style.background = '#2563eb';
+                    btnElement.innerHTML = oldBtnText;
+                }, 1500);
+            }
+        } catch (error) {
+            btnElement.style.background = '#ef4444';
+            btnElement.innerHTML = '<i class="fa-solid fa-xmark"></i> LỖI';
+            showToast('Không thể kết nối đến máy chủ hoặc dữ liệu lỗi.', 'error');
+            setTimeout(() => {
+                btnElement.disabled = false;
+                btnElement.style.background = '#2563eb';
+                btnElement.innerHTML = oldBtnText;
+            }, 1500);
+        }
+    };
+
+    window.deleteConfigStation = async function(stationId, btnElement) {
+        if (!btnElement.dataset.confirmed) {
+            btnElement.dataset.confirmed = "true";
+            btnElement.style.background = '#d97706'; 
+            btnElement.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ẤN LẠI ĐỂ XÓA';
+            
+            setTimeout(() => {
+                if (btnElement.dataset.confirmed === "true") {
+                    delete btnElement.dataset.confirmed;
+                    btnElement.style.background = '#dc2626';
+                    btnElement.innerHTML = '<i class="fa-solid fa-trash-can"></i> XÓA';
+                }
+            }, 3000);
+            return;
+        }
+
+        const targetRow = document.getElementById(`row-${stationId}`);
+        btnElement.disabled = true;
+        btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> THỰC THI';
+
+        try {
+            const response = await fetch(`/api/stations/${stationId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                showToast(`Đã xóa hoàn toàn trạm [${stationId}] khỏi hệ thống!`, 'success');
+                if (targetRow) {
+                    targetRow.style.transition = 'all 0.3s ease';
+                    targetRow.style.opacity = '0';
+                    setTimeout(() => {
+                        targetRow.style.display = 'none';
+                        resetAndFetchConfigMatrix();
+                    }, 300);
+                } else {
+                    resetAndFetchConfigMatrix();
+                }
+            } else {
+                delete btnElement.dataset.confirmed;
+                btnElement.disabled = false;
+                btnElement.style.background = '#dc2626';
+                btnElement.innerHTML = '<i class="fa-solid fa-trash-can"></i> XÓA';
+                showToast(result.message || 'Xóa trạm thất bại', 'error');
+            }
+        } catch (error) {
+            delete btnElement.dataset.confirmed;
+            btnElement.disabled = false;
+            btnElement.style.background = '#dc2626';
+            btnElement.innerHTML = '<i class="fa-solid fa-trash-can"></i> XÓA';
+            showToast('Lỗi kết nối hệ thống khi thực hiện xóa trạm.', 'error');
+        }
+    };
+
+    async function loadTelegramConfig() {
+        try {
+            const res = await fetch('/api/alerts/config');
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.length > 0) {
+                    const config = data[0];
+                    document.getElementById('tele_bot_token').value = config.bot_token || '';
+                    document.getElementById('tele_chat_id').value = config.chat_id || '';
+                    document.getElementById('tele_silent_duration').value = config.alert_interval_minutes || 30;
+                    document.getElementById('tele_global_timeout').value = config.global_offline_timeout_mins || 5;
+                    document.getElementById('tele_enabled').value = config.enabled !== undefined ? config.enabled : 1;
+                    
+                    globalTimeoutMinutes = config.global_offline_timeout_mins || 5;
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    window.saveTelegramConfig = async function(btnElement) {
+        const bot_token = document.getElementById('tele_bot_token').value.trim();
+        const chat_id = document.getElementById('tele_chat_id').value.trim();
+        const alert_interval_minutes = parseInt(document.getElementById('tele_silent_duration').value) || 30;
+        const global_offline_timeout_mins = parseInt(document.getElementById('tele_global_timeout').value) || 5;
+        const enabled = parseInt(document.getElementById('tele_enabled').value);
+
+        if (!bot_token || !chat_id) {
+            showToast('Vui lòng điền đầy đủ Token và Chat ID trước khi lưu!', 'warning');
+            return;
+        }
+
+        const oldText = btnElement.innerHTML;
+        btnElement.disabled = true;
+        btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG ĐỒNG BỘ';
+
+        try {
+            const res = await fetch('/api/alerts/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bot_token, chat_id, alert_interval_minutes, global_offline_timeout_mins, enabled })
+            });
+
+            if (res.ok) {
+                showToast('Đã lưu cấu hình và đồng bộ mạng tiến trình ngầm!', 'success');
+                await loadTelegramConfig();
+                fetchOverview(); 
+                btnElement.style.background = '#10b981';
+                btnElement.innerHTML = '<i class="fa-solid fa-square-check"></i> ĐÃ HOÀN TẤT';
+                setTimeout(() => {
+                    btnElement.disabled = false;
+                    btnElement.style.background = '#059669';
+                    btnElement.innerHTML = oldText;
+                }, 1500);
+            } else {
+                showToast('Lỗi lưu thông số từ Server.', 'error');
+                btnElement.style.background = '#ef4444';
+                btnElement.innerHTML = '<i class="fa-solid fa-xmark"></i> THẤT BẠI';
+                setTimeout(() => {
+                    btnElement.disabled = false;
+                    btnElement.style.background = '#059669';
+                    btnElement.innerHTML = oldText;
+                }, 1500);
+            }
+        } catch (err) {
+            showToast('Mất kết nối API Server cấu hình.', 'error');
+            btnElement.disabled = false;
+            btnElement.innerHTML = oldText;
+        }
+    };
+
+    window.testTelegram = async function(btnElement) {
+        const bot_token = document.getElementById('tele_bot_token').value.trim();
+        const chat_id = document.getElementById('tele_chat_id').value.trim();
+        
+        if (!bot_token || !chat_id) {
+            showToast('Vui lòng điền đầy đủ Token và Chat ID trước khi test!', 'warning');
+            return;
+        }
+
+        const oldText = btnElement.innerHTML;
+        btnElement.disabled = true;
+        btnElement.innerHTML = '<i class="fa-solid fa-paper-plane fa-spin"></i> ĐANG PHÁT TIN...';
+        
+        try {
+            const res = await fetch('/api/alerts/test-connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bot_token, chat_id })
+            });
+            
+            const data = await res.json();
+            
+            if (res.ok && data.success) {
+                showToast('Đã phát tin nhắn kiểm tra thành công! Hãy check Telegram.', 'success');
+                btnElement.style.background = '#10b981';
+                btnElement.style.color = '#fff';
+                btnElement.innerHTML = '<i class="fa-solid fa-check"></i> THÀNH CÔNG';
+                setTimeout(() => {
+                    btnElement.disabled = false;
+                    btnElement.style.background = '#f1f5f9';
+                    btnElement.style.color = '#334155';
+                    btnElement.innerHTML = oldText;
+                }, 1500);
+            } else {
+                showToast(`Gửi test thất bại: ${data.error || 'Token/ChatID sai'}`, 'error');
+                btnElement.style.background = '#ef4444';
+                btnElement.style.color = '#fff';
+                btnElement.innerHTML = '<i class="fa-solid fa-xmark"></i> THẤT BẠI';
+                setTimeout(() => {
+                    btnElement.disabled = false;
+                    btnElement.style.background = '#f1f5f9';
+                    btnElement.style.color = '#334155';
+                    btnElement.innerHTML = oldText;
+                }, 1500);
+            }
+        } catch (err) {
+            showToast('Lỗi kết nối tiến trình Telegram.', 'error');
+            btnElement.disabled = false;
+            btnElement.innerHTML = oldText;
+        }
+    };
+
+    async function startModule() {
+        await loadTelegramConfig();
+        await fetchOverview();
+    }
+
+    setTimeout(startModule, 50);
+})();
+</script>

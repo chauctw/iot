@@ -1,0 +1,29 @@
+{
+  "name": "010726",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@flydotio/dockerfile": "^0.7.10",
+    "nodemon": "^3.1.14"
+  },
+  "dependencies": {
+    "aedes": "^1.1.1",
+    "axios": "^1.18.1",
+    "bcryptjs": "^3.0.3",
+    "cheerio": "^1.2.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "mqtt": "^5.15.1",
+    "pg": "^8.22.0",
+    "websocket-stream": "^5.5.2"
+  }
+}

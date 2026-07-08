@@ -1,0 +1,158 @@
+<div class="page-card animate-fade-in">
+    <h3><i class="fa-solid fa-users-gear"></i> Quản lý danh sách Người dùng Hệ thống</h3>   
+    
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--border-color);">
+    
+    <button onclick="openUserModal()" style="margin-bottom: 15px; padding: 10px 15px; background: #16a34a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+        <i class="fa-solid fa-plus"></i> Thêm Tài Khoản Mới
+    </button>
+
+    <table style="width: 100%; border-collapse: collapse; margin-top: 10px; text-align: left;">
+        <thead>
+            <tr style="background: #f1f5f9; border-bottom: 2px solid var(--border-color);">
+                <th style="padding: 12px;">ID</th>
+                <th style="padding: 12px;">Tài khoản</th>
+                <th style="padding: 12px;">Họ tên</th>
+                <th style="padding: 12px;">Vai trò</th>
+                <th style="padding: 12px;">Hành động</th>
+            </tr>
+        </thead>
+        <tbody id="userTableBody">
+            </tbody>
+    </table>
+</div>
+
+<div id="userModal" style="display:none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999;">
+    <div style="background: white; padding: 25px; border-radius: 8px; width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h3 id="modalTitle" style="margin-top:0; color:#0284c7;">Thêm Tài Khoản</h3>
+        <form id="modalUserForm" style="display: flex; flex-direction: column; gap: 12px;">
+            <input type="hidden" id="modalUserId">
+            <div>
+                <label style="font-size: 13px; font-weight: 600;">Tên đăng nhập:</label>
+                <input type="text" id="modalUsername" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px;" required>
+            </div>
+            <div>
+                <label style="font-size: 13px; font-weight: 600;">Mật khẩu (Để trống nếu không muốn đổi):</label>
+                <input type="password" id="modalPassword" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px;">
+            </div>
+            <div>
+                <label style="font-size: 13px; font-weight: 600;">Họ và Tên:</label>
+                <input type="text" id="modalFullName" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px;" required>
+            </div>
+            <div>
+                <label style="font-size: 13px; font-weight: 600;">Quyền tài khoản:</label>
+                <select id="modalRole" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px;">
+                    <option value="Operator">Operator (Kỹ thuật viên)</option>
+                    <option value="Admin">Admin (Quản trị tối cao)</option>
+                </select>
+            </div>
+            <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top:10px;">
+                <button type="button" onclick="closeUserModal()" style="padding:8px 15px; background:#64748b; color:white; border:none; border-radius:4px; cursor:pointer;">Hủy</button>
+                <button type="submit" style="padding:8px 15px; background:#0ea5e9; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Lưu Lại</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Hàm nạp danh sách tài khoản lên bảng
+    async function fetchUsers() {
+        try {
+            const res = await fetch('/api/users');
+            if(res.status === 430) {
+                document.getElementById('userTableBody').innerHTML = `<tr><td colspan="5" style="padding:20px; color:#dc2626; text-align:center; font-weight:bold;"><i class="fa-solid fa-triangle-exclamation"></i> Bạn không có quyền xem cấu hình này (Yêu cầu tài khoản Admin)</td></tr>`;
+                return;
+            }
+            const result = await res.json();
+            if(!result.success) return;
+            
+            let html = '';
+            result.data.forEach(user => {
+                html += `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 12px;">${user.id}</td>
+                    <td style="padding: 12px; font-weight: bold;">${user.username}</td>
+                    <td style="padding: 12px;">${user.full_name || ''}</td>
+                    <td style="padding: 12px;"><span style="background:${user.role==='Admin'?'#fef2f2':'#f0fdf4'}; color:${user.role==='Admin'?'#991b1b':'#166534'}; padding:3px 8px; border-radius:12px; font-size:12px; font-weight:600;">${user.role}</span></td>
+                    <td style="padding: 12px;">
+                        <button onclick='editUser(${JSON.stringify(user)})' style="padding:4px 8px; background:#0ea5e9; color:white; border:none; border-radius:4px; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-pen"></i> Sửa</button>
+                        <button onclick="deleteUser(${user.id})" style="padding:4px 8px; background:#dc2626; color:white; border:none; border-radius:4px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Xóa</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('userTableBody').innerHTML = html || '<tr><td colspan="5" style="text-align:center; padding:15px;">Chưa có tài khoản nào.</td></tr>';
+        } catch(err) {
+            console.error(err);
+        }
+    }
+
+    function openUserModal() {
+        document.getElementById('modalUserId').value = '';
+        document.getElementById('modalUsername').value = '';
+        document.getElementById('modalUsername').disabled = false;
+        document.getElementById('modalPassword').value = '';
+        document.getElementById('modalPassword').placeholder = 'Nhập mật khẩu mới';
+        document.getElementById('modalPassword').required = true;
+        document.getElementById('modalFullName').value = '';
+        document.getElementById('modalRole').value = 'Operator';
+        document.getElementById('modalTitle').innerText = 'Thêm Tài Khoản Mới';
+        document.getElementById('userModal').style.display = 'flex';
+    }
+
+    function closeUserModal() {
+        document.getElementById('userModal').style.display = 'none';
+    }
+
+    function editUser(user) {
+        document.getElementById('modalUserId').value = user.id;
+        document.getElementById('modalUsername').value = user.username;
+        document.getElementById('modalUsername').disabled = true; // Không cho sửa username
+        document.getElementById('modalPassword').value = '';
+        document.getElementById('modalPassword').placeholder = 'Bỏ trống nếu không thay đổi';
+        document.getElementById('modalPassword').required = false;
+        document.getElementById('modalFullName').value = user.full_name;
+        document.getElementById('modalRole').value = user.role;
+        document.getElementById('modalTitle').innerText = 'Cập Nhật Tài Khoản';
+        document.getElementById('userModal').style.display = 'flex';
+    }
+
+    // Xử lý gửi Form Thêm/Sửa tài khoản
+    document.getElementById('modalUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('modalUserId').value;
+        const payload = {
+            username: document.getElementById('modalUsername').value,
+            password: document.getElementById('modalPassword').value,
+            full_name: document.getElementById('modalFullName').value,
+            role: document.getElementById('modalRole').value
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/users/${id}` : '/api/users';
+
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const resData = await response.json();
+        alert(resData.message);
+        if(resData.success) {
+            closeUserModal();
+            fetchUsers();
+        }
+    });
+
+    // Xử lý Xóa người dùng
+    async function deleteUser(id) {
+        if(confirm("Bạn có chắc chắn muốn xóa tài khoản này không?")) {
+            const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            alert(data.message);
+            if(data.success) fetchUsers();
+        }
+    }
+
+    // Tự động mồi dữ liệu khi phân hệ này được load lên màn hình
+    fetchUsers();
+</script>
