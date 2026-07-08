@@ -29,12 +29,19 @@ const { connectMQTT } = require('./services/fetchmqtt');
 // ==========================================
 app.use(express.json());
 
+// BẬT TIN CẬY PROXY: Bắt buộc phải có khi chạy sau Reverse Proxy của Fly.io để nhận biết HTTPS
+app.set('trust proxy', 1);
+
+// Tự động kiểm tra xem ứng dụng đang chạy trên Production (Fly.io) hay Local bắng biến môi trường
+const isProduction = process.env.NODE_ENV === 'production' || !!process.env.FLY_APP_NAME;
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'CAWACO_SECRET_KEY_KEYBOARD_CAT', 
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: false, // Để false khi chạy localhost thường, đổi thành true nếu chạy HTTPS Production
+    secure: isProduction, // Tự động bật true khi chạy HTTPS trên Fly.io, giữ false ở localhost để test ổn định
+    httpOnly: true,       // Ngăn chặn XSS tấn công đánh cắp cookie định danh session
     maxAge: 24 * 60 * 60 * 1000 // Phiên đăng nhập tồn tại 1 ngày
   }
 }));
@@ -63,7 +70,7 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
-// 📌 Yêu cầu 1 & 2: Vô hiệu hóa index.html, trỏ mặc định hệ thống / về trang /layout
+// Vô hiệu hóa index.html, trỏ mặc định hệ thống / về trang /layout
 app.get('/', (req, res) => {
   res.redirect('/layout');
 });
@@ -76,7 +83,7 @@ app.get('/layout', requireAuth, (req, res) => {
   });
 });
 
-// 🛡️ Yêu cầu 3: Bộ lọc bảo vệ ngăn truy cập file tĩnh trực tiếp và phân quyền trang cấu hình hệ thống
+// Bộ lọc bảo vệ ngăn truy cập file tĩnh trực tiếp và phân quyền trang cấu hình hệ thống
 app.use((req, res, next) => {
   // Chặn hoàn toàn việc cố tình gõ trực tiếp đuôi .html của layout chính hoặc index cũ
   if (req.path === '/layout.html' || req.path === '/index.html') {
