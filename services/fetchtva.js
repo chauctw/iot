@@ -36,12 +36,33 @@ function buildCookieHeader(cookies) {
   return Object.entries(cookieMap).map(([name, value]) => `${name}=${value}`).join("; ");
 }
 
+// 🔧 FIX: xử lý đúng định dạng số quốc tế lẫn châu Âu.
+// Trước đây khi gặp cả dấu "." và "," code luôn giả định kiểu châu Âu
+// (chấm = phân cách nghìn, phẩy = thập phân) nên với giá trị totalIndex
+// dạng "3,813,278.25" (kiểu quốc tế: phẩy = nghìn, chấm = thập phân)
+// bị xóa nhầm dấu chấm thập phân -> ra NaN -> null -> dòng bị loại bỏ.
+// Cách sửa: xác định dấu nào đứng SAU CÙNG trong chuỗi, đó mới là dấu thập phân thật.
 function normalizeNumber(value) {
   if (value === null || value === undefined) return null;
   if (typeof value === "number") return Number.isNaN(value) ? null : value;
-  let cleaned = String(value).trim(); if (cleaned === "" || cleaned === "-" || cleaned.toLowerCase() === "nan") return null;
-  if (cleaned.includes(".") && cleaned.includes(",")) cleaned = cleaned.replace(/\./g, "").replace(/,/g, ".");
-  else if (cleaned.includes(",")) cleaned = cleaned.replace(/,/g, ".");
+  let cleaned = String(value).trim();
+  if (cleaned === "" || cleaned === "-" || cleaned.toLowerCase() === "nan") return null;
+
+  const lastDot = cleaned.lastIndexOf(".");
+  const lastComma = cleaned.lastIndexOf(",");
+
+  if (lastDot !== -1 && lastComma !== -1) {
+    if (lastDot > lastComma) {
+      // vd: "3,813,278.25" (kiểu quốc tế: , = nghìn, . = thập phân)
+      cleaned = cleaned.replace(/,/g, "");
+    } else {
+      // vd: "3.813.278,25" (kiểu châu Âu: . = nghìn, , = thập phân)
+      cleaned = cleaned.replace(/\./g, "").replace(/,/g, ".");
+    }
+  } else if (cleaned.includes(",")) {
+    cleaned = cleaned.replace(/,/g, ".");
+  }
+
   return Number.isNaN(Number(cleaned)) ? null : Number(cleaned);
 }
 
