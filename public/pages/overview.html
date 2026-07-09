@@ -167,9 +167,9 @@
             overflow: hidden;
             text-overflow: ellipsis;
             display: flex;
-            justify-content: center;  /* Căn giữa theo chiều ngang */
-            align-items: center;      /* Căn giữa theo chiều dọc */
-            gap: 5px;                 /* Tạo khoảng cách đều giữa Icon và Chữ */
+            justify-content: center;  
+            align-items: center;      
+            gap: 5px;                 
             text-align: center;
         }
         .gauge-host {
@@ -246,13 +246,9 @@
         }
         .refresh-btn:hover { background: var(--color-hover); }
 
-        /* Style màu sắc cho nhãn chỉ số đếm cảnh báo trên tiêu đề */
         #lblOfflineSummary { color: #dc2626; }
         #lblViolationSummary { color: #d97706; }
 
-    /* ==================================================================== */
-    /* CẤU HÌNH RESPONSIVE CHO DI ĐỘNG & TABLET */
-    /* ==================================================================== */
     @media (max-width: 1200px) {
         .grid-kpi {
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -370,12 +366,9 @@
             <h2 style="margin:0; color:#1e293b; font-size: 1.2rem;">TỔNG QUAN CÁC CHỈ SỐ KPI</h2>
             
             <div class="tab-bar-container">
-                <button class="tab-btn" id="tabMonreBtn">
-                    </i>DỮ LIỆU BỘ TÀI NGUYÊN
-                </button>
-                <button class="tab-btn active" id="tabRealtimeBtn">
-                    </i>DỮ LIỆU WEB
-                </button>
+                <button class="tab-btn" id="tabMonreBtn">DỮ LIỆU BỘ TÀI NGUYÊN</button>
+                <button class="tab-btn active" id="tabRealtimeBtn">DỮ LIỆU WEB</button>
+                <button class="tab-btn" id="tabConsumptionBtn">LƯU LƯỢNG KHAI THÁC</button>
             </div>
         </div>
         <div>
@@ -393,8 +386,15 @@
 
     <div class="main-content-grid">
         <div class="card" style="align-items: stretch; width: 100%;">
-            <div class="card-title">
-                <i class="fa-solid fa-chart-line" style="color: #10b981; margin-right: 6px;"></i>BIỂU ĐỒ DỮ LIỆU LỊCH SỬ CÁC CHỈ SỐ KPI
+            <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 10px; width: 100%; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <i class="fa-solid fa-chart-line" style="color: #10b981;"></i>
+                    <span>BIỂU ĐỒ DỮ LIỆU LỊCH SỬ CÁC CHỈ SỐ KPI</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;" id="chartFilterControl">
+                    <label for="historyQueryDate" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Xem ngày:</label>
+                    <input type="date" id="historyQueryDate" style="font-size: 0.8rem; padding: 3px 6px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; color: var(--text-dark);">
+                </div>
             </div>
             <div style="flex: 1; width: 100%; height: 100%; position: relative; min-height: 0;">
                 <canvas id="kpiHistoryChart"></canvas>
@@ -428,7 +428,6 @@
 </div>
 
 <script>
-// Sử dụng khối kiểm tra tránh lỗi trùng lặp định nghĩa biến khi nạp lại trang qua AJAX
 if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
     var OVERVIEW_MODULE_INITIALIZED = true;
 }
@@ -436,7 +435,7 @@ if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
 (() => {
     const TAG_LABELS_LOCAL = {
         'amino': 'Amino', 'flow': 'Lưu lượng', 'level': 'Mực nước', 'nh4': 'Amoni',
-        'nitrat': 'Nitrat', 'no3': 'Nitrat', 'ph': 'Độ pH', 'tds': 'TDS', 'totalindex': 'TổngLL',
+        'nitrat': 'Nitrat', 'no3': 'Nitrat', 'ph': 'Độ pH', 'tds': 'TDS', 'totalindex': 'Lưu lượng khai thác trong ngày',
         'scada_tb24': 'CHẤT LƯƠNG NƯỚC TRẠM BƠM SỐ 24', 'scada_gs5nm1': 'CHẤT LƯƠNG NƯỚC GS5NM1', 'scada_gs4nm2': 'CHẤT LƯƠNG NƯỚC GS4NM2'
     };    
 
@@ -458,20 +457,29 @@ if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
         { id: "gauge6", title: "KHÁC", color: "#14b8a6", max: 1000, stationIds: "mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,tva_tb16" }
     ];    
 
+    const GAUGE_CONFIGS_CONSUMPTION = [
+        { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 15000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5,scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2,tva_tb21,tva_tb26,mqtt_qt2,scada_gs5nm1,tva_gs1nm1,mqtt_gs2nm1,tva_gs3nm1,scada_gs4nm1,tva_qt1nm1,tva_qt2nm1" },
+        { id: "gauge2", title: "GP35", color: "#10b981", max: 10000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5" },
+        { id: "gauge3", title: "GP36", color: "#f59e0b", max: 5000, stationIds: "scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2" },
+        { id: "gauge4", title: "GP391", color: "#6366f1", max: 2000, stationIds: "tva_tb21,tva_tb26,mqtt_qt2" },
+        { id: "gauge5", title: "GP393", color: "#ec4899", max: 2000, stationIds: "scada_gs5nm1,tva_gs1nm1,mqtt_gs2nm1,tva_gs3nm1,scada_gs4nm1,tva_qt1nm1,tva_qt2nm1" },
+        { id: "gauge6", title: "KHÁC", color: "#14b8a6", max: 2000, stationIds: "mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,tva_tb16" }
+    ];
+
     const CHART_COLORS = ['rgb(37, 99, 235)', 'rgb(16, 185, 129)', 'rgb(245, 158, 11)', 'rgb(99, 102, 241)', 'rgb(236, 72, 153)', 'rgb(20, 184, 166)'];
 
     let currentActiveTab = 'REALTIME';
     let gaugeInstances = {};
     let hChart = null;
+    let lastRenderedUnit = null; 
 
     const TARGET_WATER_STATIONS = ["scada_tb24", "scada_gs5nm1", "scada_gs4nm2"];
 
-    function initModule() {
+    function renderGaugeDOMs(configs) {
         const wrapper = document.getElementById('dynamicGaugeWrapper');
-        if (!wrapper) return; // Nếu cấu trúc HTML chưa sẵn sàng, thoát ra để tránh lỗi crash script
-        
+        if (!wrapper) return;
         wrapper.innerHTML = "";
-        GAUGE_CONFIGS.forEach(cfg => {
+        configs.forEach(cfg => {
             const cardHtml = `
                 <div class="card">                        
                     <div id="${cfg.id}Container" class="gauge-host"></div>
@@ -479,21 +487,24 @@ if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
             `;
             wrapper.insertAdjacentHTML('beforeend', cardHtml);
         });
+    }
 
-        try {
-            if (typeof ScadaGauge !== 'undefined') {
-                gaugeInstances = {}; // Reset cấu trúc instance tránh lưu cache rác
-                GAUGE_CONFIGS.forEach(cfg => {
-                    gaugeInstances[cfg.id] = new ScadaGauge(`${cfg.id}Container`, {
-                        min: 0, max: cfg.max, value: 0,
-                        title: cfg.title, unit: "m³/h",
-                        color: cfg.color, decimals: 0 
-                    });
-                });
-            }
-        } catch (err) {
-            console.error("❌ Lỗi khởi dựng hệ thống ScadaGauge:", err);
-        }
+    function initGaugeInstances(configs, unitStr) {
+        if (typeof ScadaGauge === 'undefined') return;
+        gaugeInstances = {}; 
+        configs.forEach(cfg => {
+            gaugeInstances[cfg.id] = new ScadaGauge(`${cfg.id}Container`, {
+                min: 0, max: cfg.max, value: 0,
+                title: cfg.title, unit: unitStr,
+                color: cfg.color, decimals: 0 
+            });
+        });
+        lastRenderedUnit = unitStr;
+    }
+
+    function initModule() {
+        renderGaugeDOMs(GAUGE_CONFIGS_REALTIME);
+        initGaugeInstances(GAUGE_CONFIGS_REALTIME, "m³/h");
 
         const chartDatasets = GAUGE_CONFIGS.map((cfg, index) => {
             const baseColor = CHART_COLORS[index % CHART_COLORS.length];
@@ -517,7 +528,6 @@ if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
         const canvasChart = document.getElementById('kpiHistoryChart');
         if (canvasChart) {
             const ctx = canvasChart.getContext('2d');
-            // Xóa biểu đồ cũ tồn dư trong biến toàn cục nếu có để tránh lỗi đè canvas
             if (window.myGlobalKpiChart) {
                 window.myGlobalKpiChart.destroy();
             }
@@ -550,44 +560,83 @@ if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
                     }
                 }
             });
-            window.myGlobalKpiChart = hChart; // Lưu tham chiếu biểu đồ
+            window.myGlobalKpiChart = hChart; 
+        }
+
+        const dateInput = document.getElementById('historyQueryDate');
+        if (dateInput) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            dateInput.value = todayStr;
+            dateInput.addEventListener('change', () => {
+                fetchDataOverview();
+            });
         }
 
         setupTabEvents();
-        fetchDataOverview(); // Thực thi gọi nạp dữ liệu lập tức ngay khi vẽ xong UI
+        fetchDataOverview(); 
     }
 
     function setupTabEvents() {
         const btnMonre = document.getElementById('tabMonreBtn');
         const btnRealtime = document.getElementById('tabRealtimeBtn');
+        const btnConsumption = document.getElementById('tabConsumptionBtn');
 
-        if(btnMonre && btnRealtime) {
-            btnMonre.addEventListener('click', () => {
-                if(currentActiveTab === 'MONRE') return;
-                currentActiveTab = 'MONRE';
-                btnMonre.classList.add('active');
-                btnRealtime.classList.remove('active');
-                fetchDataOverview(); 
-            });
+        const tabGroup = [
+            { btn: btnMonre, code: 'MONRE' },
+            { btn: btnRealtime, code: 'REALTIME' },
+            { btn: btnConsumption, code: 'CONSUMPTION' }
+        ];
 
-            btnRealtime.addEventListener('click', () => {
-                if(currentActiveTab === 'REALTIME') return;
-                currentActiveTab = 'REALTIME';
-                btnRealtime.classList.add('active');
-                btnMonre.classList.remove('active');
-                fetchDataOverview(); 
-            });
-        }
+        tabGroup.forEach(tabItem => {
+            if (tabItem.btn) {
+                tabItem.btn.addEventListener('click', () => {
+                    if (currentActiveTab === tabItem.code) return;
+                    currentActiveTab = tabItem.code;
+                    
+                    tabGroup.forEach(x => {
+                        if(x.btn) x.btn.classList.remove('active');
+                    });
+                    tabItem.btn.classList.add('active'); // 🟢 FIXED: Thay đổi từ .add thành .classList.add
+                    
+                    fetchDataOverview(); 
+                });
+            }
+        });
     }
 
     async function fetchDataOverview() {
-        // Bảo vệ hệ thống: Nếu các thẻ HTML chính đã bị xóa (chuyển sang trang khác), dừng thực thi hàm
         if (!document.getElementById('offlineTableBody')) return;
 
         try {
-            const activeConfigs = (currentActiveTab === 'MONRE') ? GAUGE_CONFIGS : GAUGE_CONFIGS_REALTIME;
+            let activeConfigs = GAUGE_CONFIGS_REALTIME;
+            let currentTagKey = 'flow';
+            let activeUnit = 'm³/h';
+
+            if (currentActiveTab === 'MONRE') {
+                activeConfigs = GAUGE_CONFIGS;
+                currentTagKey = 'flow';
+                activeUnit = 'm³/h';
+            } else if (currentActiveTab === 'CONSUMPTION') {
+                activeConfigs = GAUGE_CONFIGS_CONSUMPTION;
+                currentTagKey = 'totalIndex'; 
+                activeUnit = 'm³';
+            }
+
+            if (lastRenderedUnit !== activeUnit) {
+                renderGaugeDOMs(activeConfigs);
+                initGaugeInstances(activeConfigs, activeUnit);
+            }
+
+            let dateFilterStr = '';
+            const queryDateVal = document.getElementById('historyQueryDate')?.value;
+            if (queryDateVal) {
+                const startTimeStr = `${queryDateVal} 00:00:00`;
+                const endTimeStr = `${queryDateVal} 23:59:59`;
+                dateFilterStr = `&start_time=${encodeURIComponent(startTimeStr)}&end_time=${encodeURIComponent(endTimeStr)}`;
+            }
+            
             const fetchPromises = activeConfigs.map(cfg => 
-                fetch(`/api/kpi/flow-summary?station_ids=${cfg.stationIds}&tag_key=flow&interval_mins=30`).then(res => res.json())
+                fetch(`/api/kpi/flow-summary?station_ids=${cfg.stationIds}&tag_key=${currentTagKey}&interval_mins=30${dateFilterStr}`).then(res => res.json())
             );
             
             const results = await Promise.all(fetchPromises);
@@ -596,22 +645,40 @@ if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
             results.forEach((data, index) => {
                 const cfg = activeConfigs[index];
                 if (data.success) {
+                    let calculatedGaugeValue = 0;
+                    let processedChartPoints = [];
+
+                    if (currentActiveTab === 'CONSUMPTION' && Array.isArray(data.chart_data) && data.chart_data.length > 0) {
+                        const baseStartIndexValue = parseFloat(data.chart_data[0].value || 0);
+                        const latestCurrentIndexValue = parseFloat(data.chart_data[data.chart_data.length - 1].value || 0);
+                        
+                        calculatedGaugeValue = Math.max(0, latestCurrentIndexValue - baseStartIndexValue);
+
+                        processedChartPoints = data.chart_data.map(item => ({
+                            timestamp: item.timestamp,
+                            value: Math.max(0, Number((parseFloat(item.value || 0) - baseStartIndexValue).toFixed(2)))
+                        }));
+                    } else {
+                        calculatedGaugeValue = data.total_instant_flow || 0;
+                        processedChartPoints = data.chart_data || [];
+                    }
+
                     if (gaugeInstances[cfg.id]) {
                         gaugeInstances[cfg.id].max = cfg.max; 
                         gaugeInstances[cfg.id].setTitle(cfg.title);
-                        gaugeInstances[cfg.id].setValue(data.total_instant_flow || 0);
+                        gaugeInstances[cfg.id].setValue(calculatedGaugeValue);
                     }
-                    if (index === 0 && Array.isArray(data.chart_data)) {
-                        primaryLabels = data.chart_data.map(item => 
+
+                    if (index === 0 && processedChartPoints.length > 0) {
+                        primaryLabels = processedChartPoints.map(item => 
                             new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
                         );
                     }
-                    if (hChart && hChart.data.datasets[index] && Array.isArray(data.chart_data)) {
-                        const currentTagKey = (cfg.tag_key || 'flow').toLowerCase().trim(); 
-                        const friendlyTagName = TAG_LABELS_LOCAL[currentTagKey] || cfg.title;
 
+                    if (hChart && hChart.data.datasets[index]) {
+                        const friendlyTagName = TAG_LABELS_LOCAL[currentTagKey.toLowerCase().trim()] || cfg.title;
                         hChart.data.datasets[index].label = `${cfg.title} (${friendlyTagName})`;
-                        hChart.data.datasets[index].data = data.chart_data.map(item => item.value);
+                        hChart.data.datasets[index].data = processedChartPoints.map(item => item.value);
                     }
                 }
             });
@@ -799,7 +866,6 @@ if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
                         }
                     });
 
-                    // Kiểm tra tồn tại trước khi điền dữ liệu tránh lỗi null tham chiếu
                     if(document.getElementById("lblOfflineSummary")) document.getElementById("lblOfflineSummary").innerText = String(offlineGlobalCount).padStart(2, '0');
                     if(document.getElementById("lblViolationSummary")) document.getElementById("lblViolationSummary").innerText = String(violationGlobalCount).padStart(2, '0');
                     
@@ -822,14 +888,10 @@ if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
         btnRef.addEventListener('click', fetchDataOverview);
     }
 
-    // ⚡ GIẢI PHÁP VÀNG: Thay thế setTimeout cố định bằng bộ lắng nghe MutationObserver 
-    // Hoặc chạy ngay lập tức khi mã JS này được thực thi, do DOM đã được ghi đè từ luồng AJAX layout
     initModule();
 
-    // Thiết lập vòng lặp làm mới 30 giây một lần
     const refreshIntervalId = setInterval(fetchDataOverview, 30000);
 
-    // Dọn dẹp tiến trình ngầm (clearInterval) một cách chủ động khi người dùng rời khỏi trang này
     const destObserver = new MutationObserver(() => {
         if (!document.getElementById("offlineTableBody")) {
             clearInterval(refreshIntervalId);
