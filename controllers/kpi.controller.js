@@ -1,4 +1,3 @@
-// controllers/kpi.controller.js
 "use strict";
 
 const db = require('../config/db');
@@ -13,42 +12,73 @@ const parseStationIds = (stationIdsParam) => {
 };
 
 /**
+ * Helper lấy khoảng thời gian bắt đầu và kết thúc theo ngày/giờ được chọn.
+ */
+const getDateRange = (selectedDate) => {
+  const dateStr = selectedDate || new Date().toISOString().slice(0, 10);
+  return {
+    start: `${dateStr} 00:00:00`,
+    end: `${dateStr} 23:59:59`
+  };
+};
+
+const toTimestampString = (value, isEnd = false) => {
+  if (!value) return null;
+
+  const normalized = String(value).trim().replace('T', ' ');
+  if (normalized.length === 10) {
+    return `${normalized} ${isEnd ? '23:59:59' : '00:00:00'}`;
+  }
+
+  if (normalized.length === 16) {
+    return `${normalized}:00`;
+  }
+
+  return normalized.slice(0, 19);
+};
+
+const getRangeFromQuery = (query) => {
+  const startTime = toTimestampString(query.start_time, false);
+  const endTime = toTimestampString(query.end_time, true);
+
+  if (startTime && endTime) {
+    if (startTime > endTime) {
+      return { start: endTime, end: startTime };
+    }
+
+    return { start: startTime, end: endTime };
+  }
+
+  return getDateRange(query.selected_date);
+};
+
+/**
  * 1. Lấy tổng flow tức thời hiện tại và dữ liệu lịch sử chart (Gộp theo Nhóm Trạm)
  * API Endpoint: GET /api/kpi/flow-summary
  */
 exports.getFlowSummaryByGroup = async (req, res) => {
-  const { station_ids, tag_key, start_time, end_time, interval_mins } = req.query;
+  const { station_ids, tag_key, interval_mins } = req.query;
   const stations = parseStationIds(station_ids);
-  const flowTag = tag_key || 'flow'; // Mặc định tag lưu lượng là 'flow' nếu FE không truyền
+  const flowTag = tag_key || 'flow';
 
   if (stations.length === 0) {
-    return res.status(400).json({ success: false, error: 'Thiếu danh sách station_ids (hoặc truyền chuỗi cách nhau bằng dấu phẩy)' });
+    return res.status(400).json({ success: false, error: 'Thiếu danh sách station_ids' });
   }
 
-  const interval = parseInt(interval_mins, 10) || 5;
+  const interval = parseInt(interval_mins, 10) || 30;
+  const range = getRangeFromQuery(req.query);
 
   try {
     // 1.1 Tính tổng flow tức thời hiện tại (Latest) của nhóm trạm
     const latestQuery = `
       SELECT COALESCE(SUM(value::numeric), 0) AS total_instant_flow
       FROM logger_latest
-      WHERE logger_id = ANY($1) AND tag_key = $2
+      WHERE logger_id = ANY($1::text[]) AND tag_key = $2
     `;
     const latestRes = await db.query(latestQuery, [stations, flowTag]);
     const totalInstantFlow = parseFloat(latestRes.rows[0].total_instant_flow);
 
-    // 1.2 Xử lý khoảng thời gian mặc định cho biểu đồ (nếu thiếu)
-    let rawStart = start_time;
-    let rawEnd = end_time;
-    if (!rawStart || !rawEnd) {
-      const now = new Date();
-      const tz = now.getTimezoneOffset() * 60000;
-      const localNow = new Date(now.getTime() - tz);
-      if (!rawEnd) rawEnd = localNow.toISOString().replace("T", " ").slice(0, 19);
-      if (!rawStart) rawStart = new Date(localNow.getTime() - 86400000).toISOString().replace("T", " ").slice(0, 19); // 24h qua
-    }
-
-    // 1.3 Truy vấn biểu đồ lịch sử: Tính tổng lưu lượng trung bình của cả nhóm theo từng khung thời gian
+    // 1.2 Truy vấn biểu đồ lịch sử lưu lượng tức thời theo ngày chọn
     const chartQuery = `
       WITH station_time_slots AS (
         SELECT 
@@ -58,8 +88,8 @@ exports.getFlowSummaryByGroup = async (req, res) => {
         FROM logger_readings 
         WHERE logger_id = ANY($2) 
           AND tag_key = $3 
-          AND data_ts::timestamp >= $4::timestamp 
-          AND data_ts::timestamp <= $5::timestamp 
+          AND data_ts >= $4::timestamp 
+          AND data_ts <= $5::timestamp 
         GROUP BY logger_id, group_ts
       )
       SELECT 
@@ -69,8 +99,7 @@ exports.getFlowSummaryByGroup = async (req, res) => {
       GROUP BY group_ts
       ORDER BY group_ts ASC
     `;
-
-    const chartRes = await db.query(chartQuery, [interval, stations, flowTag, rawStart, rawEnd]);
+    const chartRes = await db.query(chartQuery, [interval, stations, flowTag, range.start, range.end]);
 
     return res.status(200).json({
       success: true,
@@ -93,66 +122,103 @@ exports.getFlowSummaryByGroup = async (req, res) => {
  * API Endpoint: GET /api/kpi/volume-consumption
  */
 exports.getVolumeConsumptionByGroup = async (req, res) => {
-  const { station_ids, tag_key } = req.query;
+  const { station_ids, tag_key, interval_mins } = req.query;
   const stations = parseStationIds(station_ids);
-  const indexTag = tag_key || 'totalIndex'; // Mặc định tag chỉ số tổng là 'totalIndex'
+  const indexTag = tag_key || 'totalIndex'; 
 
   if (stations.length === 0) {
     return res.status(400).json({ success: false, error: 'Thiếu danh sách station_ids' });
   }
 
+  const interval = parseInt(interval_mins, 10) || 30;
+  const range = getRangeFromQuery(req.query);
+
   try {
-    /**
-     * Thuật toán SQL: 
-     * - Tìm chỉ số LỚN NHẤT và NHỎ NHẤT trong Ngày hôm nay (DATE(data_ts) = CURRENT_DATE)
-     * - Tìm chỉ số LỚN NHẤT và NHỎ NHẤT trong Tháng này (data_ts thuộc tháng hiện tại)
-     * - Lượng tiêu thụ = MAX - MIN
-     */
+    // 2.1 Tính tổng sản lượng tiêu thụ trong khoảng chọn và tháng tương ứng của mốc đầu khoảng chọn
     const consumptionQuery = `
-      WITH daily_usage AS (
+      WITH selected_usage AS (
         SELECT 
           logger_id,
-          MAX(value::numeric) - MIN(value::numeric) AS day_volume
+          COALESCE(MAX(value::numeric) - MIN(value::numeric), 0) AS day_volume
         FROM logger_readings
-        WHERE logger_id = ANY($1) 
+        WHERE logger_id = ANY($1::text[]) 
           AND tag_key = $2
-          AND data_ts >= CURRENT_DATE
+          AND data_ts >= $3::timestamp AND data_ts <= $4::timestamp
         GROUP BY logger_id
       ),
       monthly_usage AS (
         SELECT 
           logger_id,
-          MAX(value::numeric) - MIN(value::numeric) AS month_volume
+          COALESCE(MAX(value::numeric) - MIN(value::numeric), 0) AS month_volume
         FROM logger_readings
-        WHERE logger_id = ANY($1) 
+        WHERE logger_id = ANY($1::text[]) 
           AND tag_key = $2
-          AND data_ts >= DATE_TRUNC('month', CURRENT_DATE)
+          AND data_ts >= DATE_TRUNC('month', $3::timestamp) AND data_ts <= $4::timestamp
         GROUP BY logger_id
       )
       SELECT 
-        COALESCE(SUM(d.day_volume), 0) AS total_cubic_meters_day,
+        COALESCE(SUM(su.day_volume), 0) AS total_cubic_meters_selected,
         COALESCE(SUM(m.month_volume), 0) AS total_cubic_meters_month
       FROM (SELECT unnest($1::text[]) AS logger_id) s
-      LEFT JOIN daily_usage d ON s.logger_id = d.logger_id
+      LEFT JOIN selected_usage su ON s.logger_id = su.logger_id
       LEFT JOIN monthly_usage m ON s.logger_id = m.logger_id
     `;
+    const consumptionRes = await db.query(consumptionQuery, [stations, indexTag, range.start, range.end]);
 
-    const { rows } = await db.query(consumptionQuery, [stations, indexTag]);
+    // 2.2 Tổng hợp sản lượng theo từng ngày trong khoảng chọn[cite: 1]
+    const chartQuery = `
+      WITH ordered_readings AS (
+        SELECT 
+          logger_id,
+          date_trunc('day', data_ts) AS group_ts,
+          value::numeric AS val,
+          ROW_NUMBER() OVER (PARTITION BY logger_id, date_trunc('day', data_ts) ORDER BY data_ts ASC) as first_row,
+          ROW_NUMBER() OVER (PARTITION BY logger_id, date_trunc('day', data_ts) ORDER BY data_ts DESC) as last_row
+        FROM logger_readings
+        WHERE logger_id = ANY($1::text[])
+          AND tag_key = $2
+          AND data_ts >= $3::timestamp AND data_ts <= $4::timestamp
+      ),
+      slot_volumes AS (
+        SELECT 
+          group_ts,
+          logger_id,
+          MAX(CASE WHEN last_row = 1 THEN val END) - MIN(CASE WHEN first_row = 1 THEN val END) AS volume
+        FROM ordered_readings
+        GROUP BY group_ts, logger_id
+      )
+      SELECT 
+        group_ts,
+        ROUND(COALESCE(SUM(volume), 0), 2) AS total_group_volume
+      FROM slot_volumes
+      GROUP BY group_ts
+      ORDER BY group_ts ASC
+    `;
+    const chartRes = await db.query(chartQuery, [stations, indexTag, range.start, range.end]);
+    const selectedTotal = localRound(parseFloat(consumptionRes.rows[0].total_cubic_meters_selected || 0), 2);
     
     return res.status(200).json({
       success: true,
       group_stations: stations,
       tag_key: indexTag,
       metrics: {
+        selected: {
+          value: selectedTotal,
+          unit: "m3"
+        },
         daily: {
-          value: ROUND(parseFloat(rows[0].total_cubic_meters_day), 2),
+          value: selectedTotal,
           unit: "m3/ngày"
         },
         monthly: {
-          value: ROUND(parseFloat(rows[0].total_cubic_meters_month), 2),
+          value: localRound(parseFloat(consumptionRes.rows[0].total_cubic_meters_month || 0), 2),
           unit: "m3/tháng"
         }
-      }
+      },
+      chart_data: chartRes.rows.map(r => ({
+        timestamp: r.group_ts,
+        value: parseFloat(r.total_group_volume)
+      }))
     });
   } catch (error) {
     console.error("❌ [KPI][VOLUME_CONSUMPTION_ERROR]", error.message);
@@ -160,7 +226,6 @@ exports.getVolumeConsumptionByGroup = async (req, res) => {
   }
 };
 
-// Helper làm tròn số cho gọn đẹp kết quả trả về
-function ROUND(num, decimalPlaces) {
+function localRound(num, decimalPlaces) {
   return Number(Math.round(num + "e" + decimalPlaces) + "e-" + decimalPlaces);
 }

@@ -6,7 +6,6 @@
     <title>Hệ Thống Giám Sát Tổng Quan KPI</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../shared/gauge.css">
     
@@ -24,351 +23,119 @@
             --primary: #14b8a6;
             --active: #0d9488;
             --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-            --space: 5px;
+            --space: 5px;            
         }
 
         .overview-container {
-            width: 100%;
-            min-height: calc(100vh - 70px);
-            height: auto;
+            width: 100%;            
+            height: 100%;
+            min-height: 0;
+            max-height: 100%;
             display: flex;
             flex-direction: column;
+            padding: var(--space);
+            gap: var(--space);
             box-sizing: border-box;
-            padding: var(--space);
-            overflow: visible;
-            gap: var(--space);
-            background: transparent;
-        }
-
-        .header-panel {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: var(--space);
-            background: var(--surface);
-            padding: var(--space);
-            border-radius: 0px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border-color);
-            margin-bottom: 0;
-            flex-wrap: wrap;
-        }
-
-        .tab-bar-container {
-            display: flex;
-            background: var(--surface-strong);
-            padding: var(--space);
-            border-radius: 0px;
-            gap: var(--space);
-            flex-wrap: wrap;
-        }
-        .tab-btn {
-            background: transparent;
-            border: none;
-            padding: 5px 10px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            cursor: pointer;
-            border-radius: 0px;
-            transition: all 0.2s ease;
-            min-height: 40px;
-        }
-        .tab-btn.active {
-            background: var(--surface);
-            color: var(--active);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .grid-kpi {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 5px;
-            width: 100%;
-            margin-bottom: 0;
-        }
-
-        .quality-water-panel {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 5px;
-            width: 100%;
-            margin-bottom: 0;
-        }
-        .water-card {
-            background: var(--surface);
-            border-radius: 0px;
-            padding: 5px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border-color);
-            border-left: 4px solid var(--primary);
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .water-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px dashed var(--border-color);
-            padding-bottom: 5px;
-        }
-        .water-station-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
-        .water-station-status {
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        .water-tags-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            align-items: center;
-        }
-        .water-tag-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-        .water-tag-val {
-            font-weight: 700;
-            color: var(--active);
-        }
-
-        .card {
-            background: var(--surface);
-            border-radius: 0px;
-            padding: 0px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            box-sizing: border-box;
-            flex: 1;
-            min-width: 0;
-        }
-        .card-title {
-            width: 100%;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-top: 0;
-            margin-bottom: 5px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
-            text-align: left;            
-            white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis;
-            display: flex;
-            justify-content: center;  
-            align-items: center;      
-            gap: 5px;                 
-            text-align: center;
         }
-        .gauge-host {
+
+        .header-panel {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            width: 100%;
-        }
-        .gauge-host .scada-gauge {
-            width: 100% !important; 
-            max-width: 100% !important;
-        }
-        
-        .main-content-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr; 
-            gap: 5px;
-            flex: 1;
-            min-height: 0;
-        }
-        .main-content-grid .card {
+            gap: var(--space);
             background: var(--surface);
-            border-radius: 0px;
-            padding: 5px;
+            padding: var(--space);
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .tab-bar-container { display: flex; background: var(--surface-strong); padding: var(--space); gap: var(--space); flex-wrap: wrap; }
+        .tab-btn { background: transparent; border: none; padding: 5px 10px; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); cursor: pointer; min-height: 40px; }
+        .tab-btn.active { background: var(--surface); color: var(--active); box-shadow: var(--shadow-sm); }
+
+        /* Căn hàng ngang cho các Control lọc thời gian + Dropdown Checkbox */
+        .controls-right-flex { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .date-filter-inline { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: var(--text-dark); flex-wrap: wrap; }
+        .date-filter-range { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .input-date { padding: 5px 8px; border: 1px solid var(--border-color); font-size: 0.82rem; color: var(--text-dark); background: var(--surface); outline: none; }
+
+        .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 5px; width: 100%; flex: 0 0 auto; }
+        .card { background: var(--surface); border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; box-sizing: border-box; flex: 1; }
+        .gauge-host { display: flex; justify-content: center; align-items: center; width: 100%; }
+        .gauge-host .scada-gauge { width: 100% !important; max-width: 100% !important; }
+
+        .card-header-flex {
+            width: 100%;
             display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            min-height: 0;
-        }
-        .table-responsive {
-            width: 100%;
-            flex: 1;
-            overflow-x: auto;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-            background: var(--surface);
-        }
-        .station-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            color: var(--text-dark);
-        }
-        .station-table th, .station-table td {
-            padding: 5px;
+            justify-content: space-between;
+            align-items: center;
             border-bottom: 1px solid var(--border-color);
-            font-size: 0.85rem;
+            padding: 6px 10px;
+            box-sizing: border-box;
+            flex-wrap: nowrap;
+            gap: 10px;
         }
-        .station-table th {
-            background-color: #f8fafc;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-        .badge-danger {
-            background-color: #fee2e2;
-            color: #dc2626;
-            padding: 5px;
-            border-radius: 0px;
-            font-size: 11px;
-            font-weight: 600;
-            display: inline-block;
-        }
-        .refresh-btn {
-            background: var(--active);
-            color: #fff;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 0px;
-            cursor: pointer;
-            font-weight: 500;
-            min-height: 40px;
-        }
-        .refresh-btn:hover { background: var(--color-hover); }
+        .card-title-inline { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 5px; margin: 0; flex: 1 1 auto; min-width: 0; }
 
-        #lblOfflineSummary { color: #dc2626; }
-        #lblViolationSummary { color: #d97706; }
+        .controls-right-flex { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; flex: 0 0 auto; }
+        .date-filter-inline { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: var(--text-dark); flex-wrap: nowrap; white-space: nowrap; }
+        .date-filter-range { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; white-space: nowrap; }
+        .input-date { width: 140px; min-width: 140px; padding: 5px 8px; border: 1px solid var(--border-color); font-size: 0.82rem; color: var(--text-dark); background: var(--surface); outline: none; }
 
-    @media (max-width: 1200px) {
-        .grid-kpi {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-        .quality-water-panel {
-            grid-template-columns: 1fr;
-        }
-    }
+        .dropdown-checkbox-container { position: relative; display: inline-block; }
+        .dropdown-checkbox-btn { background: var(--surface); border: 1px solid var(--border-color); padding: 5px 10px; font-size: 0.82rem; font-weight: 600; color: var(--text-dark); cursor: pointer; display: flex; align-items: center; gap: 8px; min-width: 130px; justify-content: space-between; }
+        .dropdown-checkbox-content { display: none; position: absolute; right: 0; background-color: #fff; min-width: 180px; box-shadow: 0px 8px 16px rgba(0,0,0,0.15); border: 1px solid var(--border-color); z-index: 100; max-height: 250px; overflow-y: auto; padding: 4px 0; }
+        .dropdown-checkbox-content.show { display: block; }
+        .dropdown-item-cb { padding: 6px 12px; display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-dark); cursor: pointer; }
+        .dropdown-item-cb:hover { background-color: #f8fafc; }
+        .dropdown-item-cb input[type="checkbox"] { width: 14px; height: 14px; min-width: 14px; min-height: 14px; margin: 0; flex-shrink: 0; accent-color: var(--active); }
 
-    @media (max-width: 768px) {
-        .overview-container {
-            padding: 5px;
-            height: auto; 
-            overflow-y: auto;
-        }
+        .main-content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+        .main-content-grid .card { background: var(--surface); padding: 5px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: stretch; }
+        .main-content-grid .card > div:last-child { min-height: 0; }
+        .table-responsive { width: 100%; flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; border: 1px solid var(--border-color); background: var(--surface); }
+        .station-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+        .station-table th, .station-table td { padding: 6px; border-bottom: 1px solid var(--border-color); }
+        .station-table th { background-color: #f8fafc; color: var(--text-muted); font-weight: 600; }
+        .badge-danger { background-color: #fee2e2; color: #dc2626; padding: 4px; font-size: 11px; font-weight: 600; }
+        .refresh-btn { background: var(--active); color: #fff; border: none; padding: 5px 12px; cursor: pointer; font-weight: 500; min-height: 40px; }
 
-        .header-panel > div:first-child {
-            width: 100%;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 5px;
-        }
-        
-        .header-panel {
-            padding: 5px;
-            flex-direction: column; 
-            align-items: stretch;
-            text-align: center;
-        }
-        
-        .header-panel h2 {
-            font-size: 1.1rem;
-            text-align: center;
-            width: 100%;
-        }
+        @media (max-width: 1280px) {
+            .card-header-flex {
+                flex-wrap: wrap;
+            }
 
-        .tab-bar-container {
-            width: 100%;
-            justify-content: center;
-        }
-        
-        .tab-btn {
-            flex: 1; 
-            padding: 6px 4px;
-            font-size: 0.75rem;
-        }
+            .controls-right-flex {
+                width: 100%;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
 
-        .refresh-btn {
-            width: 100%; 
-            padding: 8px;
-        }
-        
-        .grid-kpi {
-            grid-template-columns: 1fr;
-            gap: 5px;
-        }
-        
-        .main-content-grid {
-            grid-template-columns: 1fr !important; 
-            gap: 5px;
-        }
+            .date-filter-inline,
+            .date-filter-range {
+                flex-wrap: wrap;
+                white-space: normal;
+            }
 
-        .main-content-grid .card {
-            min-height: 240px; 
-            padding: 5px;
+            .input-date {
+                width: 100%;
+                min-width: 0;
+            }
         }
-        
-        .station-table th:nth-child(2), 
-        .station-table td:nth-child(2) {
-            display: none; 
-        }
-
-        .card-title {
-            white-space: normal;
-            line-height: 1.35;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .tab-bar-container {
-            width: 100%;
-            flex-direction: column;
-        }
-
-        .tab-btn,
-        .refresh-btn {
-            width: 100%;
-        }
-
-        .card-title {
-            white-space: normal;
-            font-size: 0.9rem;
-            text-align: left;
-        }
-
-        .header-panel h2 {
-            font-size: 1rem;
-        }
-
-        .main-content-grid .card {
-            min-height: 220px;
-        }
-
-        .station-table {
-            font-size: 0.78rem;
-        }
-    }
     </style>
 </head>
 <body>
 
 <div class="overview-container">
     <div class="header-panel">
-        <div style="display: flex; align-items: center; gap: 20px;">
+        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
             <h2 style="margin:0; color:#1e293b; font-size: 1.2rem;">TỔNG QUAN CÁC CHỈ SỐ KPI</h2>
-            
             <div class="tab-bar-container">
-                <button class="tab-btn" id="tabMonreBtn">DỮ LIỆU BỘ TÀI NGUYÊN</button>
-                <button class="tab-btn active" id="tabRealtimeBtn">DỮ LIỆU WEB</button>
-                <button class="tab-btn" id="tabConsumptionBtn">LƯU LƯỢNG KHAI THÁC</button>
+                <button class="tab-btn" id="tabMonreBtn">LƯU LƯỢNG-BTNMT</button>
+                <button class="tab-btn active" id="tabRealtimeBtn">LƯU LƯỢNG-WEB</button>
+                <button class="tab-btn" id="tabConsumptionBtn">SẢN LƯỢNG</button>
             </div>
         </div>
         <div>
@@ -378,32 +145,42 @@
 
     <div class="grid-kpi" id="dynamicGaugeWrapper"></div>
 
-    <div class="quality-water-panel" id="qualityWaterWrapper">
-        <div class="water-card" style="border-left-color: #cbd5e1;"><div style="color: #64748b; font-size: 0.8rem; font-style: italic;">Đang kiểm tra chất lượng nước...</div></div>
-        <div class="water-card" style="border-left-color: #cbd5e1;"><div style="color: #64748b; font-size: 0.8rem; font-style: italic;">Đang kiểm tra chất lượng nước...</div></div>
-        <div class="water-card" style="border-left-color: #cbd5e1;"><div style="color: #64748b; font-size: 0.8rem; font-style: italic;">Đang kiểm tra chất lượng nước...</div></div>
-    </div>
-
     <div class="main-content-grid">
         <div class="card" style="align-items: stretch; width: 100%;">
-            <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 10px; width: 100%; box-sizing: border-box;">
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <i class="fa-solid fa-chart-line" style="color: #10b981;"></i>
-                    <span>BIỂU ĐỒ DỮ LIỆU LỊCH SỬ CÁC CHỈ SỐ KPI</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;" id="chartFilterControl">
-                    <label for="historyQueryDate" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Xem ngày:</label>
-                    <input type="date" id="historyQueryDate" style="font-size: 0.8rem; padding: 3px 6px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; color: var(--text-dark);">
+            <div class="card-header-flex">
+                <h3 class="card-title-inline" id="chartTitle">
+                    <i class="fa-solid fa-chart-line" id="chartIcon" style="color: #10b981; margin-right: 6px;"></i>BIỂU ĐỒ DỮ LIỆU KPI
+                </h3>
+                
+                <div class="controls-right-flex">
+                    <div class="date-filter-inline">                        
+                        <span>Từ</span>
+                        <div class="date-filter-range">
+                            <input type="date" id="filterStartDate" class="input-date">
+                            <span>đến</span>
+                            <input type="date" id="filterEndDate" class="input-date">
+                        </div>
+                    </div>
+                    
+                    <div class="dropdown-checkbox-container">
+                        <button class="dropdown-checkbox-btn" id="divKpiGroupDropdown">
+                            <span id="lblSelectedGroups">Hiển thị: Tất cả</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-checkbox-content" id="kpiGroupOptionsWrapper"></div>
+                    </div>
                 </div>
             </div>
-            <div style="flex: 1; width: 100%; height: 100%; position: relative; min-height: 0;">
+            <div style="flex: 1 1 auto; width: 100%; height: 100%; position: relative; min-height: 0; overflow: hidden;">
                 <canvas id="kpiHistoryChart"></canvas>
             </div>
         </div>
 
         <div class="card" style="align-items: stretch;">
-            <div class="card-title" style="color: #334155;">
-                <i class="fa-solid fa-triangle-exclamation" style="color: #dc2626; margin-right: 6px;"></i>DANH SÁCH CẢNH BÁO: Mất kết nối (<span id="lblOfflineSummary">00</span>/<span class="lbl-total-summary">00</span>) - Vi phạm: (<span id="lblViolationSummary">00</span>/<span class="lbl-total-summary">00</span>)
+            <div class="card-header-flex">
+                <h3 class="card-title-inline" style="color: #334155;">
+                    <i class="fa-solid fa-triangle-exclamation" style="color: #dc2626; margin-right: 6px;"></i>DANH SÁCH CẢNH BÁO: Mất kết nối (<span id="lblOfflineSummary">00</span>/<span class="lbl-total-summary">00</span>) - Vi phạm: (<span id="lblViolationSummary">00</span>/<span class="lbl-total-summary">00</span>)
+                </h3>
             </div>
             <div class="table-responsive">
                 <table class="station-table">
@@ -416,11 +193,7 @@
                         <th style="text-align: center;">Trạng Thái</th>
                     </tr>
                 </thead>
-                <tbody id="offlineTableBody">
-                    <tr>
-                        <td colspan="5" style="text-align: center; color: #64748b; font-style: italic;">Đang đồng bộ dữ liệu giám sát...</td>
-                    </tr>
-                </tbody>
+                <tbody id="offlineTableBody"></tbody>
             </table>
             </div>
         </div>
@@ -428,17 +201,7 @@
 </div>
 
 <script>
-if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
-    var OVERVIEW_MODULE_INITIALIZED = true;
-}
-
 (() => {
-    const TAG_LABELS_LOCAL = {
-        'amino': 'Amino', 'flow': 'Lưu lượng', 'level': 'Mực nước', 'nh4': 'Amoni',
-        'nitrat': 'Nitrat', 'no3': 'Nitrat', 'ph': 'Độ pH', 'tds': 'TDS', 'totalindex': 'Lưu lượng khai thác trong ngày',
-        'scada_tb24': 'CHẤT LƯƠNG NƯỚC TRẠM BƠM SỐ 24', 'scada_gs5nm1': 'CHẤT LƯƠNG NƯỚC GS5NM1', 'scada_gs4nm2': 'CHẤT LƯƠNG NƯỚC GS4NM2'
-    };    
-
     const GAUGE_CONFIGS = [
         { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 2000, stationIds: "monre_35_clnqt4,monre_35_g1,monre_35_g12,monre_35_g15,monre_35_g18,monre_35_g2,monre_35_g20,monre_35_g22,monre_35_g23,monre_35_g24,monre_35_g25,monre_35_g27,monre_35_g4,monre_35_qt3,monre_35_qt4,monre_35_qt5,monre_36_clngs4nm2,monre_36_gs1nm2,monre_36_gs2nm2,monre_36_gs3nm2,monre_36_gs4nm2,monre_36_qt1nm2,monre_36_qt2nm2,monre_391_g21,monre_391_g26,monre_391_qt2m,monre_393_clngs5nm1,monre_393_gs1nm1,monre_393_gs2nm1,monre_393_gs3nm1,monre_393_gs4nm1,monre_393_gs5nm1,monre_393_qt1nm1,monre_393_qt2nm1" },
         { id: "gauge2", title: "GP35", color: "#10b981", max: 2000, stationIds: "monre_35_clnqt4,monre_35_g1,monre_35_g12,monre_35_g15,monre_35_g18,monre_35_g2,monre_35_g20,monre_35_g22,monre_35_g23,monre_35_g24,monre_35_g25,monre_35_g27,monre_35_g4,monre_35_qt3,monre_35_qt4,monre_35_qt5" },
@@ -457,148 +220,234 @@ if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
         { id: "gauge6", title: "KHÁC", color: "#14b8a6", max: 1000, stationIds: "mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,tva_tb16" }
     ];    
 
-    const GAUGE_CONFIGS_CONSUMPTION = [
-        { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 15000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5,scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2,tva_tb21,tva_tb26,mqtt_qt2,scada_gs5nm1,tva_gs1nm1,mqtt_gs2nm1,tva_gs3nm1,scada_gs4nm1,tva_qt1nm1,tva_qt2nm1" },
-        { id: "gauge2", title: "GP35", color: "#10b981", max: 10000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5" },
-        { id: "gauge3", title: "GP36", color: "#f59e0b", max: 5000, stationIds: "scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2" },
-        { id: "gauge4", title: "GP391", color: "#6366f1", max: 2000, stationIds: "tva_tb21,tva_tb26,mqtt_qt2" },
-        { id: "gauge5", title: "GP393", color: "#ec4899", max: 2000, stationIds: "scada_gs5nm1,tva_gs1nm1,mqtt_gs2nm1,tva_gs3nm1,scada_gs4nm1,tva_qt1nm1,tva_qt2nm1" },
-        { id: "gauge6", title: "KHÁC", color: "#14b8a6", max: 2000, stationIds: "mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,tva_tb16" }
-    ];
-
     const CHART_COLORS = ['rgb(37, 99, 235)', 'rgb(16, 185, 129)', 'rgb(245, 158, 11)', 'rgb(99, 102, 241)', 'rgb(236, 72, 153)', 'rgb(20, 184, 166)'];
 
     let currentActiveTab = 'REALTIME';
     let gaugeInstances = {};
     let hChart = null;
-    let lastRenderedUnit = null; 
+    let selectedKpiGroups = [];
 
-    const TARGET_WATER_STATIONS = ["scada_tb24", "scada_gs5nm1", "scada_gs4nm2"];
-
-    function renderGaugeDOMs(configs) {
-        const wrapper = document.getElementById('dynamicGaugeWrapper');
-        if (!wrapper) return;
-        wrapper.innerHTML = "";
-        configs.forEach(cfg => {
-            const cardHtml = `
-                <div class="card">                        
-                    <div id="${cfg.id}Container" class="gauge-host"></div>
-                </div>
-            `;
-            wrapper.insertAdjacentHTML('beforeend', cardHtml);
-        });
+    function getRangeInputs() {
+        const startInput = document.getElementById('filterStartDate');
+        const endInput = document.getElementById('filterEndDate');
+        return { startInput, endInput };
     }
 
-    function initGaugeInstances(configs, unitStr) {
-        if (typeof ScadaGauge === 'undefined') return;
-        gaugeInstances = {}; 
-        configs.forEach(cfg => {
-            gaugeInstances[cfg.id] = new ScadaGauge(`${cfg.id}Container`, {
-                min: 0, max: cfg.max, value: 0,
-                title: cfg.title, unit: unitStr,
-                color: cfg.color, decimals: 0 
-            });
-        });
-        lastRenderedUnit = unitStr;
+    function getLastNDaysRange(daysBack) {
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - Math.max(1, Number(daysBack) || 1));
+
+        const toDateInputValue = (date) => {
+            const offset = date.getTimezoneOffset() * 60000;
+            return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+        };
+
+        return {
+            start: toDateInputValue(startDate),
+            end: toDateInputValue(endDate)
+        };
+    }
+
+    function applyConsumptionDefaultRange() {
+        const { startInput, endInput } = getRangeInputs();
+        if (!startInput || !endInput) return;
+
+        const last2Days = getLastNDaysRange(1);
+        startInput.value = last2Days.start;
+        endInput.value = last2Days.end;
+    }
+
+    function normalizeDateRange() {
+        const { startInput, endInput } = getRangeInputs();
+        const startDate = startInput?.value || '';
+        const endDate = endInput?.value || '';
+
+        if (startDate && endDate && startDate > endDate) {
+            if (endInput) endInput.value = startDate;
+            return { start: startDate, end: startDate };
+        }
+
+        return {
+            start: startDate || endDate,
+            end: endDate || startDate
+        };
+    }
+
+    function getRangeQueryParams() {
+        const range = normalizeDateRange();
+        return {
+            start_time: range.start ? `${range.start} 00:00:00` : '',
+            end_time: range.end ? `${range.end} 23:59:59` : ''
+        };
     }
 
     function initModule() {
-        renderGaugeDOMs(GAUGE_CONFIGS_REALTIME);
-        initGaugeInstances(GAUGE_CONFIGS_REALTIME, "m³/h");
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const { startInput, endInput } = getRangeInputs();
+        if (startInput) startInput.value = todayStr;
+        if (endInput) endInput.value = todayStr;
+
+        const wrapper = document.getElementById('dynamicGaugeWrapper');
+        if (!wrapper) return;
+        
+        wrapper.innerHTML = "";
+        GAUGE_CONFIGS.forEach(cfg => {
+            const cardHtml = `<div class="card"><div id="${cfg.id}Container" class="gauge-host"></div></div>`;
+            wrapper.insertAdjacentHTML('beforeend', cardHtml);
+        });
+
+        reinitGauges("m³/h");
+        buildDropdownCheckboxMenu();
+        initChartStructure(); 
+        setupTabEvents();
+
+        startInput?.addEventListener('change', fetchDataOverview);
+        endInput?.addEventListener('change', fetchDataOverview);
+        fetchDataOverview(); 
+    }
+
+    function reinitGauges(unitStr) {
+        try {
+            if (typeof ScadaGauge !== 'undefined') {
+                GAUGE_CONFIGS.forEach(cfg => {
+                    const hostEl = document.getElementById(`${cfg.id}Container`);
+                    if (hostEl) hostEl.innerHTML = "";
+                    let activeMax = (unitStr === "m³") ? cfg.max * 15 : cfg.max;
+
+                    gaugeInstances[cfg.id] = new ScadaGauge(`${cfg.id}Container`, {
+                        min: 0, max: activeMax, value: 0,
+                        title: cfg.title, unit: unitStr,
+                        color: cfg.color, decimals: 0 
+                    });
+                });
+            }
+        } catch (err) { console.error(err); }
+    }
+
+    function buildDropdownCheckboxMenu() {
+        const dropdownWrapper = document.getElementById('kpiGroupOptionsWrapper');
+        const dropdownBtn = document.getElementById('divKpiGroupDropdown');
+        if (!dropdownWrapper || !dropdownBtn) return;
+
+        dropdownWrapper.innerHTML = '';
+        selectedKpiGroups = GAUGE_CONFIGS.map(c => c.title);
+
+        GAUGE_CONFIGS.forEach(cfg => {
+            const itemHtml = `
+                <label class="dropdown-item-cb">
+                    <input type="checkbox" value="${cfg.title}" checked class="cls-kpi-checkbox">
+                    <span>${cfg.title}</span>
+                </label>
+            `;
+            dropdownWrapper.insertAdjacentHTML('beforeend', itemHtml);
+        });
+
+        dropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdownWrapper.classList.toggle('show');
+        });
+
+        document.addEventListener('click', () => dropdownWrapper.classList.remove('show'));
+        dropdownWrapper.querySelectorAll('.cls-kpi-checkbox').forEach(cb => {
+            cb.addEventListener('change', () => {
+                const checkedBoxes = dropdownWrapper.querySelectorAll('.cls-kpi-checkbox:checked');
+                selectedKpiGroups = Array.from(checkedBoxes).map(el => el.value);
+                const lbl = document.getElementById('lblSelectedGroups');
+                if (lbl) {
+                    lbl.innerText = checkedBoxes.length === GAUGE_CONFIGS.length ? 'Hiển thị: Tất cả' : `Đã chọn: ${checkedBoxes.length} nhóm`;
+                }
+                updateChartVisibility();
+            });
+        });
+    }
+
+    function updateChartVisibility() {
+        if (!hChart) return;
+        GAUGE_CONFIGS.forEach((cfg, index) => {
+            if (hChart.data.datasets[index]) {
+                const isVisible = selectedKpiGroups.includes(cfg.title);
+                hChart.setDatasetVisibility(index, isVisible);
+            }
+        });
+        hChart.update();
+    }
+
+    function initChartStructure() {
+        const canvasChart = document.getElementById('kpiHistoryChart');
+        if (!canvasChart) return;
+
+        const isBar = (currentActiveTab === 'CONSUMPTION'); 
 
         const chartDatasets = GAUGE_CONFIGS.map((cfg, index) => {
             const baseColor = CHART_COLORS[index % CHART_COLORS.length];
             return {
-                label: `${cfg.title}`,
-                data: [],
+                label: `${cfg.title}`, 
+                data: [], 
                 borderColor: baseColor,
-                backgroundColor: baseColor.replace('rgb', 'rgba').replace(')', ', 0.04)'),
-                borderWidth: 2,
+                backgroundColor: isBar ? baseColor : baseColor.replace('rgb', 'rgba').replace(')', ', 0.04)'),
+                borderWidth: isBar ? 1 : 2,
                 tension: 0.2,
-                fill: true,
-                pointStyle: 'circle',            
-                pointRadius: 2,                  
-                pointHoverRadius: 7,             
-                pointBackgroundColor: '#ffffff', 
-                pointBorderColor: baseColor,     
-                pointBorderWidth: 2              
+                fill: !isBar,
+                pointStyle: 'circle',
+                pointRadius: isBar ? 0 : 2, 
+                barPercentage: 0.6,
+                categoryPercentage: 0.8
             };
         });
 
-        const canvasChart = document.getElementById('kpiHistoryChart');
-        if (canvasChart) {
-            const ctx = canvasChart.getContext('2d');
-            if (window.myGlobalKpiChart) {
-                window.myGlobalKpiChart.destroy();
-            }
-            hChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: chartDatasets 
+        if (window.myGlobalKpiChart) window.myGlobalKpiChart.destroy();
+        
+        const chartType = isBar ? 'bar' : 'line';
+
+        hChart = new Chart(canvasChart.getContext('2d'), {
+            type: chartType, 
+            data: { labels: [], datasets: chartDatasets },
+            options: {
+                responsive: true, 
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: { 
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, 
+                    x: { grid: { display: false } } 
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                        x: { grid: { display: false } }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top', 
-                            labels: {
-                                usePointStyle: true,        
-                                pointStyle: 'circle',       
-                                boxWidth: 5,               
-                                boxHeight: 5,              
-                                padding: 15,                
-                                font: { size: 12, weight: '500', family: "'Segoe UI', sans-serif" }
-                            }
-                        }
+                // ==========================================
+                // THÊM ĐOẠN CONFIG NÀY ĐỂ ẨN THANH CHÚ THÍCH MẶC ĐỊNH
+                // ==========================================
+                plugins: {
+                    legend: {
+                        display: false // Ẩn hoàn toàn Legend mặc định của Chart.js
                     }
                 }
-            });
-            window.myGlobalKpiChart = hChart; 
-        }
-
-        const dateInput = document.getElementById('historyQueryDate');
-        if (dateInput) {
-            const todayStr = new Date().toISOString().split('T')[0];
-            dateInput.value = todayStr;
-            dateInput.addEventListener('change', () => {
-                fetchDataOverview();
-            });
-        }
-
-        setupTabEvents();
-        fetchDataOverview(); 
+                // ==========================================
+            }
+        });
+        window.myGlobalKpiChart = hChart;
     }
 
     function setupTabEvents() {
-        const btnMonre = document.getElementById('tabMonreBtn');
-        const btnRealtime = document.getElementById('tabRealtimeBtn');
-        const btnConsumption = document.getElementById('tabConsumptionBtn');
-
-        const tabGroup = [
-            { btn: btnMonre, code: 'MONRE' },
-            { btn: btnRealtime, code: 'REALTIME' },
-            { btn: btnConsumption, code: 'CONSUMPTION' }
+        const tabs = [
+            { id: 'tabMonreBtn', key: 'MONRE', unit: 'm³/h' },
+            { id: 'tabRealtimeBtn', key: 'REALTIME', unit: 'm³/h' },
+            { id: 'tabConsumptionBtn', key: 'CONSUMPTION', unit: 'm³' }
         ];
 
-        tabGroup.forEach(tabItem => {
-            if (tabItem.btn) {
-                tabItem.btn.addEventListener('click', () => {
-                    if (currentActiveTab === tabItem.code) return;
-                    currentActiveTab = tabItem.code;
+        tabs.forEach(tabInfo => {
+            const btn = document.getElementById(tabInfo.id);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    if (currentActiveTab === tabInfo.key) return;
+                    currentActiveTab = tabInfo.key;
+                    tabs.forEach(t => document.getElementById(t.id)?.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    if (tabInfo.key === 'CONSUMPTION') {
+                        applyConsumptionDefaultRange();
+                    }
                     
-                    tabGroup.forEach(x => {
-                        if(x.btn) x.btn.classList.remove('active');
-                    });
-                    tabItem.btn.classList.add('active'); // 🟢 FIXED: Thay đổi từ .add thành .classList.add
-                    
-                    fetchDataOverview(); 
+                    reinitGauges(tabInfo.unit);
+                    initChartStructure(); // Đổi lại cấu trúc line/bar khi chuyển tab[cite: 2]
+                    fetchDataOverview();
                 });
             }
         });
@@ -608,300 +457,151 @@ if (typeof OVERVIEW_MODULE_INITIALIZED === 'undefined') {
         if (!document.getElementById('offlineTableBody')) return;
 
         try {
-            let activeConfigs = GAUGE_CONFIGS_REALTIME;
-            let currentTagKey = 'flow';
-            let activeUnit = 'm³/h';
-
-            if (currentActiveTab === 'MONRE') {
-                activeConfigs = GAUGE_CONFIGS;
-                currentTagKey = 'flow';
-                activeUnit = 'm³/h';
-            } else if (currentActiveTab === 'CONSUMPTION') {
-                activeConfigs = GAUGE_CONFIGS_CONSUMPTION;
-                currentTagKey = 'totalIndex'; 
-                activeUnit = 'm³';
-            }
-
-            if (lastRenderedUnit !== activeUnit) {
-                renderGaugeDOMs(activeConfigs);
-                initGaugeInstances(activeConfigs, activeUnit);
-            }
-
-            let dateFilterStr = '';
-            const queryDateVal = document.getElementById('historyQueryDate')?.value;
-            if (queryDateVal) {
-                const startTimeStr = `${queryDateVal} 00:00:00`;
-                const endTimeStr = `${queryDateVal} 23:59:59`;
-                dateFilterStr = `&start_time=${encodeURIComponent(startTimeStr)}&end_time=${encodeURIComponent(endTimeStr)}`;
-            }
+            const activeConfigs = (currentActiveTab === 'MONRE') ? GAUGE_CONFIGS : GAUGE_CONFIGS_REALTIME;
+            const { start_time, end_time } = getRangeQueryParams();
+            let gaugeBaseUrl = '';
+            let chartBaseUrl = '';
             
-            const fetchPromises = activeConfigs.map(cfg => 
-                fetch(`/api/kpi/flow-summary?station_ids=${cfg.stationIds}&tag_key=${currentTagKey}&interval_mins=30${dateFilterStr}`).then(res => res.json())
-            );
-            
-            const results = await Promise.all(fetchPromises);
+            if (currentActiveTab === 'CONSUMPTION') {
+                applyConsumptionDefaultRange();
+                gaugeBaseUrl = `/api/kpi/volume-consumption?tag_key=totalIndex&interval_mins=30&station_ids=`;
+                chartBaseUrl = `/api/kpi/volume-consumption?tag_key=totalIndex&interval_mins=30&start_time=${encodeURIComponent(start_time)}&end_time=${encodeURIComponent(end_time)}&station_ids=`;
+                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-bar" style="color: #10b981; margin-right: 6px;"></i>BIỂU ĐỒ SẢN LƯỢNG (m³)';
+            } else {
+                gaugeBaseUrl = `/api/kpi/flow-summary?tag_key=flow&interval_mins=30&station_ids=`;
+                chartBaseUrl = `/api/kpi/flow-summary?tag_key=flow&interval_mins=30&start_time=${encodeURIComponent(start_time)}&end_time=${encodeURIComponent(end_time)}&station_ids=`;
+                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-line" style="color: #10b981; margin-right: 6px;"></i>BIỂU ĐỒ LƯU LƯỢNG(m³/h)';
+            }
+
+            const gaugeFetchPromises = activeConfigs.map(cfg => fetch(gaugeBaseUrl + cfg.stationIds).then(res => res.json()));
+            const chartFetchPromises = activeConfigs.map(cfg => fetch(chartBaseUrl + cfg.stationIds).then(res => res.json()));
+            const [gaugeResults, chartResults] = await Promise.all([
+                Promise.all(gaugeFetchPromises),
+                Promise.all(chartFetchPromises)
+            ]);
             let primaryLabels = [];
 
-            results.forEach((data, index) => {
+            gaugeResults.forEach((data, index) => {
                 const cfg = activeConfigs[index];
-                if (data.success) {
-                    let calculatedGaugeValue = 0;
-                    let processedChartPoints = [];
+                if (data.success && gaugeInstances[cfg.id]) {
+                    if (currentActiveTab === 'CONSUMPTION') {
+                        const selectedValue = data.metrics && data.metrics.selected ? Number(data.metrics.selected.value) || 0 : (data.metrics && data.metrics.daily ? Number(data.metrics.daily.value) || 0 : 0);
+                        gaugeInstances[cfg.id].setValue(selectedValue);
 
-                    if (currentActiveTab === 'CONSUMPTION' && Array.isArray(data.chart_data) && data.chart_data.length > 0) {
-                        const baseStartIndexValue = parseFloat(data.chart_data[0].value || 0);
-                        const latestCurrentIndexValue = parseFloat(data.chart_data[data.chart_data.length - 1].value || 0);
-                        
-                        calculatedGaugeValue = Math.max(0, latestCurrentIndexValue - baseStartIndexValue);
-
-                        processedChartPoints = data.chart_data.map(item => ({
-                            timestamp: item.timestamp,
-                            value: Math.max(0, Number((parseFloat(item.value || 0) - baseStartIndexValue).toFixed(2)))
-                        }));
                     } else {
-                        calculatedGaugeValue = data.total_instant_flow || 0;
-                        processedChartPoints = data.chart_data || [];
-                    }
-
-                    if (gaugeInstances[cfg.id]) {
-                        gaugeInstances[cfg.id].max = cfg.max; 
-                        gaugeInstances[cfg.id].setTitle(cfg.title);
-                        gaugeInstances[cfg.id].setValue(calculatedGaugeValue);
-                    }
-
-                    if (index === 0 && processedChartPoints.length > 0) {
-                        primaryLabels = processedChartPoints.map(item => 
-                            new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-                        );
-                    }
-
-                    if (hChart && hChart.data.datasets[index]) {
-                        const friendlyTagName = TAG_LABELS_LOCAL[currentTagKey.toLowerCase().trim()] || cfg.title;
-                        hChart.data.datasets[index].label = `${cfg.title} (${friendlyTagName})`;
-                        hChart.data.datasets[index].data = processedChartPoints.map(item => item.value);
+                        gaugeInstances[cfg.id].setValue(data.total_instant_flow || 0);
                     }
                 }
             });
 
+            chartResults.forEach((data, index) => {
+                const cfg = activeConfigs[index];
+                if (!data.success || !hChart || !hChart.data.datasets[index]) return;
+
+                const chartData = Array.isArray(data.chart_data) ? data.chart_data : [];
+
+                if (!primaryLabels.length && chartData.length > 0) {
+                    primaryLabels = chartData.map(item => {
+                        if (currentActiveTab === 'CONSUMPTION') {
+                            return new Date(item.timestamp).toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+                        }
+
+                        return new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                    });
+                }
+
+                if (currentActiveTab === 'CONSUMPTION') {
+                    hChart.data.datasets[index].label = `${cfg.title} (m³)`;
+                } else {
+                    hChart.data.datasets[index].label = `${cfg.title} (Tức thời m³/h)`;
+                }
+
+                hChart.data.datasets[index].data = chartData.map(item => Number(item.value) || 0);
+            });
+
             if (hChart) {
+                if (!primaryLabels.length) {
+                    const fallbackSeries = chartResults.find(item => item?.success && Array.isArray(item.chart_data) && item.chart_data.length > 0);
+                    if (fallbackSeries) {
+                        primaryLabels = fallbackSeries.chart_data.map(item => {
+                            if (currentActiveTab === 'CONSUMPTION') {
+                                return new Date(item.timestamp).toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+                            }
+
+                            return new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                        });
+                    }
+                }
                 hChart.data.labels = primaryLabels;
                 hChart.update();
+                updateChartVisibility();
             }
 
+            // --- SYNC ĐỒNG BỘ BẢNG BÁO LỖI ---
             const resOverview = await fetch('/api/overview/latest');
             const overviewResult = await resOverview.json();
             const tableBody = document.getElementById('offlineTableBody');
-            const waterWrapper = document.getElementById('qualityWaterWrapper');
             
-            if (overviewResult.success && Array.isArray(overviewResult.data)) {
-                if (waterWrapper) {
-                    waterWrapper.innerHTML = '';
-                    TARGET_WATER_STATIONS.forEach(targetId => {
-                        const stationData = overviewResult.data.find(d => String(d.logger_id).toLowerCase().trim() === targetId.toLowerCase().trim());
-                        
-                        if (stationData) {
-                            const cleanStationKey = String(stationData.logger_id).toLowerCase().trim();
-                            const name = TAG_LABELS_LOCAL[cleanStationKey] || stationData.display_name || stationData.logger_id;
-                            const dbStatus = stationData.last_known_status ? String(stationData.last_known_status).toLowerCase().trim() : "offline";
-                            const isOnline = (dbStatus === 'online' || dbStatus === '1' || dbStatus === 'true');
-                            
-                            let tagsMarkup = '';
-                            let cardBorderColor = isOnline ? '#14b8a6' : '#ef4444';
-                            
-                            if (stationData.tags && typeof stationData.tags === 'object') {
-                                Object.keys(stationData.tags).forEach(tagKey => {
-                                    const cleanKey = tagKey.toLowerCase().trim();
-                                    if (cleanKey !== 'flow' && cleanKey !== 'totalindex') {
-                                        const label = TAG_LABELS_LOCAL[cleanKey] || tagKey.toUpperCase();
-                                        const tagInfo = stationData.tags[tagKey];
-                                        
-                                        let valStyle = '';
-                                        if (tagInfo.threshold_enabled && tagInfo.value !== null) {
-                                            const currentVal = parseFloat(tagInfo.value);
-                                            const maxVal = tagInfo.max_value !== null ? parseFloat(tagInfo.max_value) : null;
-                                            const minVal = tagInfo.min_value !== null ? parseFloat(tagInfo.min_value) : null;
-                                            if ((maxVal !== null && currentVal > maxVal) || (minVal !== null && currentVal < minVal)) {
-                                                valStyle = 'color: #ef4444; background: #fee2e2; padding: 0 4px; border-radius: 0px; font-weight: 800;';
-                                            }
-                                        }
-                                        
-                                        tagsMarkup += `
-                                            <div class="water-tag-item">
-                                                <span>${label}:</span>
-                                                <span class="water-tag-val" style="${valStyle}">${tagInfo.value ?? '-'}</span>
-                                            </div>
-                                        `;
-                                    }
-                                });
-                            }
-                            
-                            if (!tagsMarkup) {
-                                tagsMarkup = '<div style="color: #94a3b8; font-size: 0.75rem; font-style: italic;">Không có thông số đo chất lượng</div>';
-                            }
+            if (overviewResult.success && Array.isArray(overviewResult.data) && tableBody) {
+                tableBody.innerHTML = '';
+                let totalGlobal = overviewResult.data.length, offlineCount = 0, violationCount = 0, hasErrors = 0;
 
-                            const cardHtml = `
-                                <div class="water-card" style="border-left-color: ${cardBorderColor};">
-                                    <div class="water-card-header">
-                                        <span class="water-station-title"><i class="fa-solid fa-droplet" style="color: #06b6d4;"></i> ${name}</span>
-                                        <span class="water-station-status" style="color: ${isOnline ? '#10b981' : '#ef4444'};">
-                                            ${isOnline ? '● Online' : '● Mất kết nối'}
-                                        </span>
-                                    </div>
-                                    <div class="water-tags-container">
-                                        ${tagsMarkup}
-                                    </div>
-                                </div>
-                            `;
-                            waterWrapper.insertAdjacentHTML('beforeend', cardHtml);
-                        } else {
-                            waterWrapper.insertAdjacentHTML('beforeend', `
-                                <div class="water-card" style="border-left-color: #cbd5e1;">
-                                    <div class="water-card-header">
-                                        <span class="water-station-title" style="color: #94a3b8;"><i class="fa-solid fa-ban"></i> ${targetId.toUpperCase()}</span>
-                                        <span class="water-station-status" style="color: #94a3b8;">Không có dữ liệu</span>
-                                    </div>
-                                </div>
-                            `);
-                        }
-                    });
-                }
-
-                if (tableBody) {
-                    tableBody.innerHTML = '';
-                    let totalGlobal = overviewResult.data.length;
-                    let offlineGlobalCount = 0;
-                    let violationGlobalCount = 0;
-                    let hasErrorsOnScreen = 0;
-
-                    overviewResult.data.forEach(st => {
-                        const stationName = st.display_name || st.logger_id;
-                        const loggerIdLower = String(st.logger_id).toLowerCase().trim();
-                        const isMonreStation = loggerIdLower.startsWith('monre_');
-
-                        const dbStatus = st.last_known_status ? String(st.last_known_status).toLowerCase().trim() : "offline";
-                        const isOnline = (dbStatus === 'online' || dbStatus === '1' || dbStatus === 'true');
-
-                        if (!isOnline) {
-                            offlineGlobalCount++;
-                            hasErrorsOnScreen++;
-
-                            let targetTs = isMonreStation ? st.data_ts : st.current_ts;
-                            let transmissionTime = 'N/A';
-                            
-                            if (targetTs) {
-                                const dateObj = new Date(targetTs);
-                                transmissionTime = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}:${String(dateObj.getSeconds()).padStart(2, '0')}`;
-                            }
-
-                            let delayText = "N/A";
-                            if (st.current_ts && st.data_ts) {
-                                const delayMinutes = Math.floor((new Date(st.current_ts).getTime() - new Date(st.data_ts).getTime()) / 60000);
-                                delayText = delayMinutes > 0 ? `${delayMinutes} phút` : '0 phút';
-                            }
-
-                            const row = `
-                                <tr style="background: #fff5f5;">
-                                    <td style="text-align: left;"><strong>${stationName}</strong></td>
-                                    <td style="text-align: center;"><span style="color: #475569;">${transmissionTime}</span></td>
-                                    <td style="text-align: center; color: #94a3b8; font-style: italic;">- Mất kết nối -</td>
-                                    <td style="text-align: center;"><span style="color: #e11d48; font-weight: 500;">Trễ ${delayText}</span></td>
-                                    <td style="text-align: center;"><span class="badge-danger">🔴 Mất tín hiệu</span></td>
-                                </tr>
-                            `;
-                            tableBody.insertAdjacentHTML('beforeend', row);
-                        }
-
-                        let stationHasViolation = false;
-                        if (st.tags && typeof st.tags === 'object') {
-                            Object.keys(st.tags).forEach(tagKey => {
-                                const tagInfo = st.tags[tagKey];
-                                
-                                if (tagInfo && tagInfo.threshold_enabled === true && tagInfo.value !== null) {
-                                    const currentVal = parseFloat(tagInfo.value);
-                                    const maxVal = tagInfo.max_value !== null ? parseFloat(tagInfo.max_value) : null;
-                                    const minVal = tagInfo.min_value !== null ? parseFloat(tagInfo.min_value) : null;
-                                    
-                                    let isBreached = false;
-                                    let breachDetail = "";
-
-                                    if (maxVal !== null && currentVal > maxVal) {
-                                        isBreached = true;
-                                        breachDetail = ` > Max <b>${maxVal}</b>`;
-                                    } else if (minVal !== null && currentVal < minVal) {
-                                        isBreached = true;
-                                        breachDetail = ` < Min <b>${minVal}</b>`;
-                                    }
-
-                                    if (isBreached) {
-                                        stationHasViolation = true;
-                                        hasErrorsOnScreen++;
-
-                                        let tagTargetTs = isMonreStation ? tagInfo.data_ts : tagInfo.current_ts;
-                                        let tagDataTsStr = 'N/A';
-                                        
-                                        if (tagTargetTs) {
-                                            const dateObj = new Date(tagTargetTs);
-                                            tagDataTsStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}:${String(dateObj.getSeconds()).padStart(2, '0')}`;
-                                        }
-
-                                        const cleanTagKey = tagKey.toLowerCase().trim();
-                                        const friendlyTagDisplay = TAG_LABELS_LOCAL[cleanTagKey] || tagKey.toUpperCase();
-
-                                        const rowBreach = `
-                                            <tr style="background: #fffbeb;">
-                                                <td style="text-align: left;"><span style="color: #b45309; font-weight: 600;">${stationName}</span></td>
-                                                <td style="text-align: center;"><span style="color: #475569;">${tagDataTsStr}</span></td>
-                                                <td style="text-align: center;"><span style="font-weight: 700; color: #2563eb;">${friendlyTagDisplay}</span></td>
-                                                <td style="text-align: center; color: #d97706;"><b>${currentVal}</b>${breachDetail}</td>
-                                                <td style="text-align: center;"><span class="badge-danger" style="background-color: #fef3c7; color: #d97706; border: 1px solid #fde68a;">⚠️ Vi phạm ngưỡng</span></td>
-                                            </tr>
-                                        `;
-                                        tableBody.insertAdjacentHTML('beforeend', rowBreach);
-                                    }
-                                }
-                            });
-                        }
-                        if (stationHasViolation) {
-                            violationGlobalCount++;
-                        }
-                    });
-
-                    if(document.getElementById("lblOfflineSummary")) document.getElementById("lblOfflineSummary").innerText = String(offlineGlobalCount).padStart(2, '0');
-                    if(document.getElementById("lblViolationSummary")) document.getElementById("lblViolationSummary").innerText = String(violationGlobalCount).padStart(2, '0');
-                    
-                    document.querySelectorAll(".lbl-total-summary").forEach(el => {
-                        el.innerText = String(totalGlobal).padStart(2, '0');
-                    });
-
-                    if (hasErrorsOnScreen === 0) {
-                        tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #10b981; font-weight: 600; font-style: italic;">✅ Toàn bộ hệ thống trạm đều đang Online ổn định!</td></tr>`;
+                overviewResult.data.forEach(st => {
+                    const isOnline = (String(st.last_known_status).toLowerCase().trim() === 'online');
+                    if (!isOnline) {
+                        offlineCount++; hasErrors++;
+                        tableBody.insertAdjacentHTML('beforeend', `
+                            <tr style="background: #fff5f5;">
+                                <td><strong>${st.display_name || st.logger_id}</strong></td>
+                                <td style="text-align: center;">-</td>
+                                <td style="text-align: center; color:#94a3b8;">Mất kết nối</td>
+                                <td style="text-align: center; color:#e11d48;">Mất tín hiệu</td>
+                                <td style="text-align: center;"><span class="badge-danger">🔴 Offline</span></td>
+                            </tr>`);
                     }
-                }
+                    if (st.tags) {
+                        let stationHasViolation = false;
+                        Object.keys(st.tags).forEach(tk => {
+                            const tagInfo = st.tags[tk];
+                            if (tagInfo && tagInfo.threshold_enabled && tagInfo.value !== null) {
+                                const cv = parseFloat(tagInfo.value), maxv = tagInfo.max_value ? parseFloat(tagInfo.max_value) : null, minv = tagInfo.min_value ? parseFloat(tagInfo.min_value) : null;
+                                if ((maxv && cv > maxv) || (minv && cv < minv)) {
+                                    stationHasViolation = true; hasErrors++;
+                                    tableBody.insertAdjacentHTML('beforeend', `
+                                        <tr style="background: #fffbeb;">
+                                            <td>${st.display_name || st.logger_id}</td>
+                                            <td style="text-align: center;">-</td>
+                                            <td style="text-align: center; font-weight:700;">${tk.toUpperCase()}</td>
+                                            <td style="text-align: center; color:#d97706;"><b>${cv}</b> (Vượt ngưỡng)</td>
+                                            <td style="text-align: center;"><span class="badge-danger" style="background:#fef3c7; color:#d97706;">⚠️ Vi phạm</span></td>
+                                        </tr>`);
+                                }
+                            }
+                        });
+                        if (stationHasViolation) violationCount++;
+                    }
+                });
+
+                document.getElementById("lblOfflineSummary").innerText = String(offlineCount).padStart(2, '0');
+                document.getElementById("lblViolationSummary").innerText = String(violationCount).padStart(2, '0');
+                document.querySelectorAll(".lbl-total-summary").forEach(el => el.innerText = String(totalGlobal).padStart(2, '0'));
+                if (hasErrors === 0) tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #10b981; font-weight: 600;">✅ Toàn bộ hệ thống ổn định!</td></tr>`;
             }
-        } catch (error) {
-            console.error("❌ Lỗi xử lý đồng bộ giao diện overview:", error);
-        }
+        } catch (error) { console.error(error); }
     }
 
     const btnRef = document.getElementById('btnRefreshOverview');
-    if(btnRef) {
-        btnRef.addEventListener('click', fetchDataOverview);
-    }
+    if(btnRef) btnRef.addEventListener('click', fetchDataOverview);
 
     initModule();
-
     const refreshIntervalId = setInterval(fetchDataOverview, 30000);
-
     const destObserver = new MutationObserver(() => {
         if (!document.getElementById("offlineTableBody")) {
-            clearInterval(refreshIntervalId);
-            destObserver.disconnect();
+            clearInterval(refreshIntervalId); destObserver.disconnect();
         }
     });
-    const parentContainer = document.getElementById("mainContent") || document.body;
-    destObserver.observe(parentContainer, { childList: true });
+    destObserver.observe(document.getElementById("mainContent") || document.body, { childList: true });
 })();
 </script>
-
 </body>
 </html>

@@ -1,4 +1,5 @@
-﻿|-- config
+﻿|-- .github
+|-- config
 |   |-- db.js
 |-- controllers
 |   |-- kpi.controller.js
@@ -52,11 +53,12 @@
 |   |-- fetchtva.js
 |-- .env
 |-- app.js
+|-- backupdb.js
 |-- get_attributes.js
-|-- hash.js
 |-- init.js
 |-- package-lock.json
 |-- package.json
 |-- README.md
 |-- schema.sql
 |-- structure.txt
+|-- test_fetch.js
