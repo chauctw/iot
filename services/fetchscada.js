@@ -40,12 +40,28 @@ function collectCookies(existing, next) {
   return Array.from(new Set([...existing, ...next].map((c) => c.split(";")[0]))).join("; ");
 }
 
-function parseScadaValue(textValue) {
+function parseScadaValue(textValue, parameter = null) {
   if (textValue === null || textValue === undefined) return null;
   let cleaned = String(textValue).trim();
   if (cleaned === "" || cleaned === "-" || cleaned.toLowerCase() === "nan") return null;
-  if (cleaned.includes(".") && cleaned.includes(",")) cleaned = cleaned.replace(/\./g, "").replace(/,/g, ".");
-  else if (cleaned.includes(",")) cleaned = cleaned.replace(/,/g, ".");
+
+  // Cấu hình riêng cho Chỉ số tổng (totalIndex)
+  if (parameter === "totalIndex") {
+    // Xóa bỏ tất cả dấu phẩy (phân cách hàng nghìn) và dấu chấm (nếu có) để đưa về số nguyên sạch
+    cleaned = cleaned.replace(/,/g, "").replace(/\./g, ""); 
+    // Ví dụ: "929,999" -> "929999"
+  } else {
+    // Cấu hình cho các thông số lẻ (pH, level, flow, amino...)
+    // Nếu chuỗi chứa cả chấm và phẩy (Ví dụ chuẩn Anh/Mỹ: 1,234.56)
+    if (cleaned.includes(".") && cleaned.includes(",")) {
+      cleaned = cleaned.replace(/\./g, "").replace(/,/g, ".");
+    } 
+    // Nếu chuỗi chỉ chứa dấu phẩy đóng vai trò là dấu thập phân (Ví dụ: 7,98)
+    else if (cleaned.includes(",")) {
+      cleaned = cleaned.replace(/,/g, "."); // "7,98" -> "7.98"
+    }
+  }
+
   return Number.isNaN(Number(cleaned)) ? null : Number(cleaned);
 }
 
@@ -106,7 +122,8 @@ async function fetchScadaData() {
       if (!station || !parameter) continue;
 
       const stationId = buildStationId(DEFAULT_CONFIG.source, String(station).toLowerCase());
-      const parsedValue = item.Text ? parseScadaValue(item.Text) : null;
+      // const parsedValue = item.Text ? parseScadaValue(item.Text) : null;
+      const parsedValue = item.Text ? parseScadaValue(item.Text, parameter) : null;
       if (parsedValue === null) continue;
 
       await dbClient.query(upsertLatestQuery, [stationId, parameter, currentFetchTs, parsedValue, currentFetchTs]);

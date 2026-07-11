@@ -83,17 +83,20 @@ exports.getFlowSummaryByGroup = async (req, res) => {
       WITH station_time_slots AS (
         SELECT 
           logger_id,
-          to_timestamp(floor(extract(epoch from data_ts) / ($1 * 60)) * ($1 * 60)) AS group_ts,
+          (
+            date_trunc('hour', data_ts AT TIME ZONE 'Asia/Ho_Chi_Minh')
+            + (floor(extract(minute from (data_ts AT TIME ZONE 'Asia/Ho_Chi_Minh')) / $1) * $1 || ' minutes')::interval
+          ) AS group_ts,
           AVG(value::numeric) AS avg_station_value
         FROM logger_readings 
         WHERE logger_id = ANY($2) 
           AND tag_key = $3 
-          AND data_ts >= $4::timestamp 
-          AND data_ts <= $5::timestamp 
+          AND (data_ts AT TIME ZONE 'Asia/Ho_Chi_Minh') >= $4::timestamp 
+          AND (data_ts AT TIME ZONE 'Asia/Ho_Chi_Minh') <= $5::timestamp 
         GROUP BY logger_id, group_ts
       )
       SELECT 
-        group_ts,
+        to_char(group_ts, 'YYYY-MM-DD HH24:MI:SS') AS group_ts,
         ROUND(SUM(avg_station_value), 2) AS total_group_flow
       FROM station_time_slots
       GROUP BY group_ts
@@ -107,7 +110,7 @@ exports.getFlowSummaryByGroup = async (req, res) => {
       tag_key: flowTag,
       total_instant_flow: totalInstantFlow,
       chart_data: chartRes.rows.map(r => ({
-        timestamp: r.group_ts,
+        timestamp: typeof r.group_ts === 'string' ? r.group_ts : new Date(r.group_ts).toISOString().slice(0, 19).replace('T', ' '),
         value: parseFloat(r.total_group_flow)
       }))
     });
@@ -170,14 +173,14 @@ exports.getVolumeConsumptionByGroup = async (req, res) => {
       WITH ordered_readings AS (
         SELECT 
           logger_id,
-          date_trunc('day', data_ts) AS group_ts,
+          date_trunc('day', data_ts AT TIME ZONE 'Asia/Ho_Chi_Minh') AS group_ts,
           value::numeric AS val,
-          ROW_NUMBER() OVER (PARTITION BY logger_id, date_trunc('day', data_ts) ORDER BY data_ts ASC) as first_row,
-          ROW_NUMBER() OVER (PARTITION BY logger_id, date_trunc('day', data_ts) ORDER BY data_ts DESC) as last_row
+          ROW_NUMBER() OVER (PARTITION BY logger_id, date_trunc('day', data_ts AT TIME ZONE 'Asia/Ho_Chi_Minh') ORDER BY data_ts ASC) as first_row,
+          ROW_NUMBER() OVER (PARTITION BY logger_id, date_trunc('day', data_ts AT TIME ZONE 'Asia/Ho_Chi_Minh') ORDER BY data_ts DESC) as last_row
         FROM logger_readings
         WHERE logger_id = ANY($1::text[])
           AND tag_key = $2
-          AND data_ts >= $3::timestamp AND data_ts <= $4::timestamp
+          AND (data_ts AT TIME ZONE 'Asia/Ho_Chi_Minh') >= $3::timestamp AND (data_ts AT TIME ZONE 'Asia/Ho_Chi_Minh') <= $4::timestamp
       ),
       slot_volumes AS (
         SELECT 
@@ -188,7 +191,7 @@ exports.getVolumeConsumptionByGroup = async (req, res) => {
         GROUP BY group_ts, logger_id
       )
       SELECT 
-        group_ts,
+        to_char(group_ts, 'YYYY-MM-DD HH24:MI:SS') AS group_ts,
         ROUND(COALESCE(SUM(volume), 0), 2) AS total_group_volume
       FROM slot_volumes
       GROUP BY group_ts
@@ -216,7 +219,7 @@ exports.getVolumeConsumptionByGroup = async (req, res) => {
         }
       },
       chart_data: chartRes.rows.map(r => ({
-        timestamp: r.group_ts,
+        timestamp: typeof r.group_ts === 'string' ? r.group_ts : new Date(r.group_ts).toISOString().slice(0, 19).replace('T', ' '),
         value: parseFloat(r.total_group_volume)
       }))
     });
@@ -229,3 +232,139 @@ exports.getVolumeConsumptionByGroup = async (req, res) => {
 function localRound(num, decimalPlaces) {
   return Number(Math.round(num + "e" + decimalPlaces) + "e-" + decimalPlaces);
 }
+
+/**
+ * 3. Báo cáo chỉ số totalIndex có bộ lọc Ngày/Tháng, lọc nhiễu mạng và chống reset đồng hồ
+ * API Endpoint: GET /api/kpi/station-index-report
+ */
+exports.getStationIndexReport = async (req, res) => {
+  const { tag_key, report_type, date, month } = req.query;
+  const indexTag = tag_key || 'totalIndex'; // Mặc định tag chỉ số tổng là 'totalIndex'
+  const type = report_type || 'day';        // Mặc định lọc theo ngày nếu không truyền
+
+  try {
+    // Lấy thời gian hiện tại theo GMT+7 để làm giá trị mặc định nếu FE không truyền
+    const now = new Date();
+    const tzOffset = 7 * 60 * 60 * 1000; // Múi giờ GMT+7
+    const localNow = new Date(now.getTime() + tzOffset);
+    const todayStr = localNow.toISOString().split('T')[0]; // Định dạng YYYY-MM-DD
+    const thisMonthStr = todayStr.substring(0, 7);          // Định dạng YYYY-MM
+
+    let timeFilterSQL = '';
+    const queryParams = [indexTag];
+
+    // Xử lý logic lọc động theo Ngày hoặc Tháng
+    if (type === 'month') {
+      const selectedMonth = month || thisMonthStr;
+      timeFilterSQL = `to_char(data_ts AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM') = $2`;
+      queryParams.push(selectedMonth);
+    } else {
+      const selectedDate = date || todayStr;
+      timeFilterSQL = `(data_ts AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = $2::date`;
+      queryParams.push(selectedDate);
+    }
+
+    /**
+     * THUẬT TOÁN BẢO VỆ DỮ LIỆU LOG TIÊU THỤ:
+     * - CASE 1: val >= prev_val -> Đồng hồ tăng tuyến tính bình thường -> lấy hiệu số.
+     * - CASE 2: val < prev_val VÀ val < 100 -> Đồng hồ thực sự bị reset về 0 hoặc thay mới -> lấy val.
+     * - CASE 3: val < prev_val nhưng val lớn -> Nhiễu tín hiệu mạng (tụt nhẹ rồi tăng lại) -> gán bằng 0.
+     */
+    const reportQuery = `
+      WITH ordered_readings AS (
+        SELECT 
+          id,
+          logger_id,
+          value::numeric AS val,
+          data_ts AT TIME ZONE 'Asia/Ho_Chi_Minh' AS local_ts,
+          LAG(value::numeric) OVER (PARTITION BY logger_id ORDER BY data_ts ASC, id ASC) AS prev_val,
+          ROW_NUMBER() OVER (PARTITION BY logger_id ORDER BY data_ts ASC, id ASC) as row_first,
+          ROW_NUMBER() OVER (PARTITION BY logger_id ORDER BY data_ts DESC, id DESC) as row_last
+        FROM logger_readings
+        WHERE tag_key = $1
+          AND logger_id NOT LIKE 'monre_%'
+          AND ${timeFilterSQL}
+      ),
+      step_deltas AS (
+        SELECT 
+          logger_id,
+          val,
+          local_ts,
+          row_first,
+          row_last,
+          CASE 
+            WHEN prev_val IS NULL THEN 0
+            WHEN val >= prev_val THEN val - prev_val
+            WHEN val < prev_val AND val < 100 THEN val 
+            ELSE 0 
+          END AS step_delta
+        FROM ordered_readings
+      ),
+      station_summaries AS (
+        SELECT 
+          logger_id,
+          SUM(step_delta) AS total_station_delta,
+          MAX(CASE WHEN row_first = 1 THEN val END) AS start_index,
+          MAX(CASE WHEN row_first = 1 THEN to_char(local_ts, 'YYYY-MM-DD HH24:MI:SS') END) AS start_time,
+          MAX(CASE WHEN row_last = 1 THEN val END) AS end_index,
+          MAX(CASE WHEN row_last = 1 THEN to_char(local_ts, 'YYYY-MM-DD HH24:MI:SS') END) AS end_time
+        FROM step_deltas
+        GROUP BY logger_id
+      ),
+      distinct_stations AS (
+        SELECT DISTINCT
+          lr.logger_id,
+          COALESCE(ls.display_name, lr.logger_id) AS display_name
+        FROM logger_readings lr
+        LEFT JOIN logger_stations ls ON ls.station_id = lr.logger_id
+        WHERE lr.tag_key = $1 
+          AND lr.logger_id NOT LIKE 'monre_%'
+      )
+      SELECT 
+        s.logger_id AS station_id,
+        s.display_name AS station_name,
+        ROUND(COALESCE(st.start_index, 0), 2)::float AS start_index,
+        st.start_time,
+        ROUND(COALESCE(st.end_index, 0), 2)::float AS end_index,
+        st.end_time,
+        ROUND(COALESCE(st.total_station_delta, 0), 2)::float AS delta_index
+      FROM distinct_stations s
+      LEFT JOIN station_summaries st ON s.logger_id = st.logger_id
+      ORDER BY s.display_name ASC
+    `;
+
+    const { rows } = await db.query(reportQuery, queryParams);
+
+    let totalDeltaVolume = 0;
+
+    // Duyệt mảng cấu trúc lại dữ liệu và cộng dồn tổng sản lượng hệ thống
+    const reportData = rows.map((row, index) => {
+      totalDeltaVolume += (row.delta_index || 0);
+      
+      return {
+        stt: index + 1,
+        station_id: row.station_id,
+        station_name: row.station_name,
+        start_index: row.start_index,
+        start_time: row.start_time || "Không có dữ liệu", 
+        end_index: row.end_index,
+        end_time: row.end_time || "Không có dữ liệu",
+        delta_index: row.delta_index
+      };
+    });
+    
+    // Trả JSON về kết hợp hàm toFixed native bảo vệ lỗi "ROUND is not defined"
+    return res.status(200).json({
+      success: true,
+      tag_key: indexTag,
+      filter_type: type,
+      filtered_value: queryParams[1],
+      total_stations: reportData.length,
+      total_delta_volume: parseFloat(totalDeltaVolume.toFixed(2)), 
+      data: reportData
+    });
+  } catch (error) {
+    console.error("❌ [KPI][STATION_INDEX_REPORT_FILTER_ERROR]", error.message);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};

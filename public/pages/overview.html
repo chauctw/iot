@@ -36,7 +36,7 @@
             padding: var(--space);
             gap: var(--space);
             box-sizing: border-box;
-            overflow: hidden;
+            overflow: auto;
         }
 
         .header-panel {
@@ -92,13 +92,23 @@
         .dropdown-item-cb:hover { background-color: #f8fafc; }
         .dropdown-item-cb input[type="checkbox"] { width: 14px; height: 14px; min-width: 14px; min-height: 14px; margin: 0; flex-shrink: 0; accent-color: var(--active); }
 
-        .main-content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+        .chart-controls-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .chart-view-wrapper { flex: 1 1 auto; width: 100%; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+        .chart-panel { width: 100%; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+        .chart-panel-body { flex: 1 1 auto; width: 100%; min-height: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        .flow-chart-body { flex: 1 1 auto; width: 100%; min-height: 0; position: relative; overflow: hidden; }
+        .consumption-table-wrapper { display: none; width: 100%; height: 100%; border: none; background: transparent; padding: 0; }
+        .consumption-table tfoot td { background: #f8fafc; font-weight: 700; color: var(--text-dark); }
+        .consumption-summary-cell { text-align: center; }
+
+        .main-content-grid { display: grid; grid-template-columns: 1fr; gap: 5px; flex: 1 1 auto; min-height: 0; overflow: hidden; }
         .main-content-grid .card { background: var(--surface); padding: 5px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: stretch; }
         .main-content-grid .card > div:last-child { min-height: 0; }
         .table-responsive { width: 100%; flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; border: 1px solid var(--border-color); background: var(--surface); }
         .station-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
         .station-table th, .station-table td { padding: 6px; border-bottom: 1px solid var(--border-color); }
         .station-table th { background-color: #f8fafc; color: var(--text-muted); font-weight: 600; }
+        .consumption-number-cell { text-align: right; white-space: nowrap; }
         .badge-danger { background-color: #fee2e2; color: #dc2626; padding: 4px; font-size: 11px; font-weight: 600; }
         .refresh-btn { background: var(--active); color: #fff; border: none; padding: 5px 12px; cursor: pointer; font-weight: 500; min-height: 40px; }
 
@@ -146,33 +156,74 @@
     <div class="grid-kpi" id="dynamicGaugeWrapper"></div>
 
     <div class="main-content-grid">
-        <div class="card" style="align-items: stretch; width: 100%;">
+        <div class="card chart-panel" style="align-items: stretch; width: 100%;">
             <div class="card-header-flex">
                 <h3 class="card-title-inline" id="chartTitle">
                     <i class="fa-solid fa-chart-line" id="chartIcon" style="color: #10b981; margin-right: 6px;"></i>BIỂU ĐỒ DỮ LIỆU KPI
                 </h3>
-                
-                <div class="controls-right-flex">
-                    <div class="date-filter-inline">                        
-                        <span>Từ</span>
-                        <div class="date-filter-range">
-                            <input type="date" id="filterStartDate" class="input-date">
-                            <span>đến</span>
-                            <input type="date" id="filterEndDate" class="input-date">
+                    
+                    <div class="controls-right-flex">
+                        <div class="chart-controls-group" id="flowChartControls">
+                            <div class="date-filter-inline">                        
+                                <span>Từ</span>
+                                <div class="date-filter-range">
+                                    <input type="date" id="filterStartDate" class="input-date">
+                                    <span>đến</span>
+                                    <input type="date" id="filterEndDate" class="input-date">
+                                </div>
+                            </div>
+                            
+                            <div class="dropdown-checkbox-container">
+                                <button class="dropdown-checkbox-btn" id="divKpiGroupDropdown">
+                                    <span id="lblSelectedGroups">Hiển thị: Tất cả</span>
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </button>
+                                <div class="dropdown-checkbox-content" id="kpiGroupOptionsWrapper"></div>
+                            </div>
+                        </div>
+                        <div class="chart-controls-group" id="consumptionChartControls" style="display: none;">
+                            <div class="date-filter-inline">
+                                <span>Kiểu</span>
+                                <select id="consumptionReportType" class="input-date" style="width: 120px; min-width: 120px;">
+                                    <option value="day">Theo ngày</option>
+                                    <option value="month">Theo tháng</option>
+                                </select>
+                            </div>
+                            <div class="date-filter-inline" id="consumptionDayFilter">
+                                <span>Ngày</span>
+                                <input type="date" id="consumptionReportDate" class="input-date">
+                            </div>
+                            <div class="date-filter-inline" id="consumptionMonthFilter" style="display: none;">
+                                <span>Tháng</span>
+                                <input type="month" id="consumptionReportMonth" class="input-date">
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="dropdown-checkbox-container">
-                        <button class="dropdown-checkbox-btn" id="divKpiGroupDropdown">
-                            <span id="lblSelectedGroups">Hiển thị: Tất cả</span>
-                            <i class="fa-solid fa-chevron-down"></i>
-                        </button>
-                        <div class="dropdown-checkbox-content" id="kpiGroupOptionsWrapper"></div>
-                    </div>
                 </div>
-            </div>
-            <div style="flex: 1 1 auto; width: 100%; height: 100%; position: relative; min-height: 0; overflow: hidden;">
-                <canvas id="kpiHistoryChart"></canvas>
+            <div id="flowChartWrapper" class="chart-view-wrapper chart-panel-body">
+                <div id="flowChartCanvasWrapper" class="flow-chart-body">
+                    <canvas id="kpiHistoryChart"></canvas>
+                </div>
+                <div id="consumptionTableWrapper" class="table-responsive consumption-table-wrapper">
+                    <table class="station-table consumption-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align: center; width: 70px;">STT</th>
+                                <th style="text-align: left;">TÊN TRẠM</th>
+                                <th style="text-align: center;">CHỈ SỐ ĐẦU NGÀY</th>
+                                <th style="text-align: center;">CHỈ SỐ CUỐI NGÀY</th>
+                                <th style="text-align: center;">SẢN LƯỢNG M3</th>
+                            </tr>
+                        </thead>
+                        <tbody id="consumptionTableBody"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" style="text-align: center;">TỔNG SẢN LƯỢNG TOÀN BỘ CÁC TRẠM:</td>
+                                <td class="consumption-summary-cell"><span id="consumptionTotalValue">0</span> <span id="consumptionTotalUnit">m³/ngày</span></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -203,7 +254,7 @@
 <script>
 (() => {
     const GAUGE_CONFIGS = [
-        { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 2000, stationIds: "monre_35_clnqt4,monre_35_g1,monre_35_g12,monre_35_g15,monre_35_g18,monre_35_g2,monre_35_g20,monre_35_g22,monre_35_g23,monre_35_g24,monre_35_g25,monre_35_g27,monre_35_g4,monre_35_qt3,monre_35_qt4,monre_35_qt5,monre_36_clngs4nm2,monre_36_gs1nm2,monre_36_gs2nm2,monre_36_gs3nm2,monre_36_gs4nm2,monre_36_qt1nm2,monre_36_qt2nm2,monre_391_g21,monre_391_g26,monre_391_qt2m,monre_393_clngs5nm1,monre_393_gs1nm1,monre_393_gs2nm1,monre_393_gs3nm1,monre_393_gs4nm1,monre_393_gs5nm1,monre_393_qt1nm1,monre_393_qt2nm1" },
+        { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 2000, stationIds: "monre_35_clnqt4,monre_35_g1,monre_35_g12,monre_35_g15,monre_35_g18,monre_35_g2,monre_35_g20,monre_35_g22,monre_35_g23,monre_35_g24,monre_35_g25,monre_35_g27,monre_35_g4,monre_35_qt3,monre_35_qt4,monre_35_qt5,monre_36_clngs4nm2,monre_36_gs1nm2,monre_36_gs2nm2,monre_36_gs3nm2,monre_36_gs4nm2,monre_36_qt1nm2,monre_36_qt2nm2,monre_391_g21,monre_391_g26,monre_391_qt2m,monre_393_clngs5nm1,monre_393_gs1nm1,monre_393_gs2nm1,monre_393_gs3nm1,monre_393_gs4nm1,monre_393_gs5nm1,monre_393_qt1nm1,monre_393_qt2nm1,mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,scada_tb1,tva_tb16" },
         { id: "gauge2", title: "GP35", color: "#10b981", max: 2000, stationIds: "monre_35_clnqt4,monre_35_g1,monre_35_g12,monre_35_g15,monre_35_g18,monre_35_g2,monre_35_g20,monre_35_g22,monre_35_g23,monre_35_g24,monre_35_g25,monre_35_g27,monre_35_g4,monre_35_qt3,monre_35_qt4,monre_35_qt5" },
         { id: "gauge3", title: "GP36", color: "#f59e0b", max: 2000, stationIds: "monre_36_clngs4nm2,monre_36_gs1nm2,monre_36_gs2nm2,monre_36_gs3nm2,monre_36_gs4nm2,monre_36_qt1nm2,monre_36_qt2nm2" },
         { id: "gauge4", title: "GP391", color: "#6366f1", max: 1000, stationIds: "monre_391_g21,monre_391_g26,monre_391_qt2m" },
@@ -212,7 +263,7 @@
     ];
 
     const GAUGE_CONFIGS_REALTIME = [
-        { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 2000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5,scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2,tva_tb21,tva_tb26,mqtt_qt2,scada_gs5nm1,tva_gs1nm1,mqtt_gs2nm1,tva_gs3nm1,scada_gs4nm1,tva_qt1nm1,tva_qt2nm1" },
+        { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 2000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5,scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2,tva_tb21,tva_tb26,mqtt_qt2,scada_gs5nm1,tva_gs1nm1,mqtt_gs2nm1,tva_gs3nm1,scada_gs4nm1,tva_qt1nm1,tva_qt2nm1,mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,tva_tb16" },
         { id: "gauge2", title: "GP35", color: "#10b981", max: 2000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5" },
         { id: "gauge3", title: "GP36", color: "#f59e0b", max: 2000, stationIds: "scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2" },
         { id: "gauge4", title: "GP391", color: "#6366f1", max: 1000, stationIds: "tva_tb21,tva_tb26,mqtt_qt2" },
@@ -249,13 +300,55 @@
         };
     }
 
-    function applyConsumptionDefaultRange() {
-        const { startInput, endInput } = getRangeInputs();
-        if (!startInput || !endInput) return;
+    function getConsumptionInputs() {
+        return {
+            reportTypeInput: document.getElementById('consumptionReportType'),
+            reportDateInput: document.getElementById('consumptionReportDate'),
+            reportMonthInput: document.getElementById('consumptionReportMonth'),
+            dayFilter: document.getElementById('consumptionDayFilter'),
+            monthFilter: document.getElementById('consumptionMonthFilter')
+        };
+    }
 
-        const last2Days = getLastNDaysRange(1);
-        startInput.value = last2Days.start;
-        endInput.value = last2Days.end;
+    function initConsumptionDefaults() {
+        const { reportTypeInput, reportDateInput, reportMonthInput } = getConsumptionInputs();
+        const today = new Date();
+        const todayStr = today.toISOString().slice(0, 10);
+        const monthStr = todayStr.slice(0, 7);
+
+        if (reportTypeInput && !reportTypeInput.value) {
+            reportTypeInput.value = 'day';
+        }
+        if (reportDateInput && !reportDateInput.value) {
+            reportDateInput.value = todayStr;
+        }
+        if (reportMonthInput && !reportMonthInput.value) {
+            reportMonthInput.value = monthStr;
+        }
+        syncConsumptionFilterMode();
+    }
+
+    function syncConsumptionFilterMode() {
+        const { reportTypeInput, dayFilter, monthFilter } = getConsumptionInputs();
+        const reportType = reportTypeInput?.value || 'day';
+
+        if (dayFilter) dayFilter.style.display = reportType === 'day' ? 'flex' : 'none';
+        if (monthFilter) monthFilter.style.display = reportType === 'month' ? 'flex' : 'none';
+
+        return reportType;
+    }
+
+    function getConsumptionReportParams() {
+        const { reportTypeInput, reportDateInput, reportMonthInput } = getConsumptionInputs();
+        const reportType = syncConsumptionFilterMode();
+
+        if (reportType === 'month') {
+            const month = reportMonthInput?.value || new Date().toISOString().slice(0, 7);
+            return { report_type: 'month', month };
+        }
+
+        const date = reportDateInput?.value || new Date().toISOString().slice(0, 10);
+        return { report_type: 'day', date };
     }
 
     function normalizeDateRange() {
@@ -276,10 +369,70 @@
 
     function getRangeQueryParams() {
         const range = normalizeDateRange();
+        const todayLocal = new Date();
+        const todayLocalDate = new Date(todayLocal.getTime() - todayLocal.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        const currentLocalStamp = new Date(todayLocal.getTime() - todayLocal.getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 19)
+            .replace('T', ' ');
+
         return {
             start_time: range.start ? `${range.start} 00:00:00` : '',
-            end_time: range.end ? `${range.end} 23:59:59` : ''
+            end_time: range.end ? `${range.end === todayLocalDate ? currentLocalStamp : `${range.end} 23:59:59`}` : ''
         };
+    }
+
+    function formatLocalChartTime(timestampValue) {
+        const timestampText = String(timestampValue || '');
+        if (timestampText.length >= 16) {
+            return timestampText.substring(11, 16);
+        }
+
+        return timestampText;
+    }
+
+    function formatVietnameseNumber(value) {
+        return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(Number(value) || 0);
+    }
+
+    function buildStationIndexTotals(reportRows, configs) {
+        const rowMap = new Map();
+        (Array.isArray(reportRows) ? reportRows : []).forEach(row => {
+            rowMap.set(String(row.station_id || ''), Number(row.delta_index) || 0);
+        });
+
+        return configs.map(cfg => {
+            const stationIds = String(cfg.stationIds || '')
+                .split(',')
+                .map(id => id.trim())
+                .filter(Boolean);
+
+            const total = stationIds.reduce((sum, stationId) => sum + (rowMap.get(stationId) || 0), 0);
+            return Number(total.toFixed(2));
+        });
+    }
+
+    function applyOverviewViewMode() {
+        const isConsumption = currentActiveTab === 'CONSUMPTION';
+        const flowControls = document.getElementById('flowChartControls');
+        const consumptionControls = document.getElementById('consumptionChartControls');
+        const flowWrapper = document.getElementById('flowChartWrapper');
+        const flowCanvasWrapper = document.getElementById('flowChartCanvasWrapper');
+        const consumptionWrapper = document.getElementById('consumptionTableWrapper');
+
+        if (flowControls) flowControls.style.display = isConsumption ? 'none' : 'flex';
+        if (consumptionControls) consumptionControls.style.display = isConsumption ? 'flex' : 'none';
+        if (flowWrapper) flowWrapper.style.display = 'flex';
+        if (flowCanvasWrapper) flowCanvasWrapper.style.display = isConsumption ? 'none' : 'block';
+        if (consumptionWrapper) consumptionWrapper.style.display = isConsumption ? 'block' : 'none';
+
+        if (isConsumption) {
+            if (window.myGlobalKpiChart) {
+                window.myGlobalKpiChart.destroy();
+                window.myGlobalKpiChart = null;
+            }
+            hChart = null;
+        }
     }
 
     function initModule() {
@@ -297,13 +450,21 @@
             wrapper.insertAdjacentHTML('beforeend', cardHtml);
         });
 
+        initConsumptionDefaults();
         reinitGauges("m³/h");
         buildDropdownCheckboxMenu();
         initChartStructure(); 
         setupTabEvents();
+        applyOverviewViewMode();
 
         startInput?.addEventListener('change', fetchDataOverview);
         endInput?.addEventListener('change', fetchDataOverview);
+        document.getElementById('consumptionReportType')?.addEventListener('change', () => {
+            syncConsumptionFilterMode();
+            fetchDataOverview();
+        });
+        document.getElementById('consumptionReportDate')?.addEventListener('change', fetchDataOverview);
+        document.getElementById('consumptionReportMonth')?.addEventListener('change', fetchDataOverview);
         fetchDataOverview(); 
     }
 
@@ -375,9 +536,14 @@
 
     function initChartStructure() {
         const canvasChart = document.getElementById('kpiHistoryChart');
-        if (!canvasChart) return;
-
-        const isBar = (currentActiveTab === 'CONSUMPTION'); 
+        if (!canvasChart || currentActiveTab === 'CONSUMPTION') {
+            if (window.myGlobalKpiChart) {
+                window.myGlobalKpiChart.destroy();
+                window.myGlobalKpiChart = null;
+            }
+            hChart = null;
+            return;
+        }
 
         const chartDatasets = GAUGE_CONFIGS.map((cfg, index) => {
             const baseColor = CHART_COLORS[index % CHART_COLORS.length];
@@ -385,12 +551,12 @@
                 label: `${cfg.title}`, 
                 data: [], 
                 borderColor: baseColor,
-                backgroundColor: isBar ? baseColor : baseColor.replace('rgb', 'rgba').replace(')', ', 0.04)'),
-                borderWidth: isBar ? 1 : 2,
+                backgroundColor: baseColor.replace('rgb', 'rgba').replace(')', ', 0.04)'),
+                borderWidth: 2,
                 tension: 0.2,
-                fill: !isBar,
+                fill: true,
                 pointStyle: 'circle',
-                pointRadius: isBar ? 0 : 2, 
+                pointRadius: 2, 
                 barPercentage: 0.6,
                 categoryPercentage: 0.8
             };
@@ -398,10 +564,8 @@
 
         if (window.myGlobalKpiChart) window.myGlobalKpiChart.destroy();
         
-        const chartType = isBar ? 'bar' : 'line';
-
         hChart = new Chart(canvasChart.getContext('2d'), {
-            type: chartType, 
+            type: 'line', 
             data: { labels: [], datasets: chartDatasets },
             options: {
                 responsive: true, 
@@ -442,11 +606,12 @@
                     btn.classList.add('active');
 
                     if (tabInfo.key === 'CONSUMPTION') {
-                        applyConsumptionDefaultRange();
+                        initConsumptionDefaults();
                     }
                     
                     reinitGauges(tabInfo.unit);
-                    initChartStructure(); // Đổi lại cấu trúc line/bar khi chuyển tab[cite: 2]
+                    applyOverviewViewMode();
+                    initChartStructure();
                     fetchDataOverview();
                 });
             }
@@ -459,82 +624,105 @@
         try {
             const activeConfigs = (currentActiveTab === 'MONRE') ? GAUGE_CONFIGS : GAUGE_CONFIGS_REALTIME;
             const { start_time, end_time } = getRangeQueryParams();
-            let gaugeBaseUrl = '';
-            let chartBaseUrl = '';
             
             if (currentActiveTab === 'CONSUMPTION') {
-                applyConsumptionDefaultRange();
-                gaugeBaseUrl = `/api/kpi/volume-consumption?tag_key=totalIndex&interval_mins=30&station_ids=`;
-                chartBaseUrl = `/api/kpi/volume-consumption?tag_key=totalIndex&interval_mins=30&start_time=${encodeURIComponent(start_time)}&end_time=${encodeURIComponent(end_time)}&station_ids=`;
-                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-bar" style="color: #10b981; margin-right: 6px;"></i>BIỂU ĐỒ SẢN LƯỢNG (m³)';
-            } else {
-                gaugeBaseUrl = `/api/kpi/flow-summary?tag_key=flow&interval_mins=30&station_ids=`;
-                chartBaseUrl = `/api/kpi/flow-summary?tag_key=flow&interval_mins=30&start_time=${encodeURIComponent(start_time)}&end_time=${encodeURIComponent(end_time)}&station_ids=`;
-                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-line" style="color: #10b981; margin-right: 6px;"></i>BIỂU ĐỒ LƯU LƯỢNG(m³/h)';
-            }
-
-            const gaugeFetchPromises = activeConfigs.map(cfg => fetch(gaugeBaseUrl + cfg.stationIds).then(res => res.json()));
-            const chartFetchPromises = activeConfigs.map(cfg => fetch(chartBaseUrl + cfg.stationIds).then(res => res.json()));
-            const [gaugeResults, chartResults] = await Promise.all([
-                Promise.all(gaugeFetchPromises),
-                Promise.all(chartFetchPromises)
-            ]);
-            let primaryLabels = [];
-
-            gaugeResults.forEach((data, index) => {
-                const cfg = activeConfigs[index];
-                if (data.success && gaugeInstances[cfg.id]) {
-                    if (currentActiveTab === 'CONSUMPTION') {
-                        const selectedValue = data.metrics && data.metrics.selected ? Number(data.metrics.selected.value) || 0 : (data.metrics && data.metrics.daily ? Number(data.metrics.daily.value) || 0 : 0);
-                        gaugeInstances[cfg.id].setValue(selectedValue);
-
-                    } else {
-                        gaugeInstances[cfg.id].setValue(data.total_instant_flow || 0);
-                    }
-                }
-            });
-
-            chartResults.forEach((data, index) => {
-                const cfg = activeConfigs[index];
-                if (!data.success || !hChart || !hChart.data.datasets[index]) return;
-
-                const chartData = Array.isArray(data.chart_data) ? data.chart_data : [];
-
-                if (!primaryLabels.length && chartData.length > 0) {
-                    primaryLabels = chartData.map(item => {
-                        if (currentActiveTab === 'CONSUMPTION') {
-                            return new Date(item.timestamp).toLocaleDateString([], { day: '2-digit', month: '2-digit' });
-                        }
-
-                        return new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-                    });
-                }
-
-                if (currentActiveTab === 'CONSUMPTION') {
-                    hChart.data.datasets[index].label = `${cfg.title} (m³)`;
+                const { report_type, date, month } = getConsumptionReportParams();
+                const queryParams = new URLSearchParams({ tag_key: 'totalIndex', report_type });
+                if (report_type === 'month') {
+                    queryParams.set('month', month);
                 } else {
-                    hChart.data.datasets[index].label = `${cfg.title} (Tức thời m³/h)`;
+                    queryParams.set('date', date);
                 }
 
-                hChart.data.datasets[index].data = chartData.map(item => Number(item.value) || 0);
-            });
+                const reportResponse = await fetch(`/api/kpi/station-index-report?${queryParams.toString()}`);
+                const reportResult = await reportResponse.json();
+                const reportRows = Array.isArray(reportResult.data) ? reportResult.data : [];
+                const groupTotals = buildStationIndexTotals(reportRows, activeConfigs);
+                const tableBody = document.getElementById('consumptionTableBody');
+                const totalValue = document.getElementById('consumptionTotalValue');
+                const totalUnit = document.getElementById('consumptionTotalUnit');
+                const displayUnit = report_type === 'month' ? 'm³/tháng' : 'm³/ngày';
 
-            if (hChart) {
-                if (!primaryLabels.length) {
-                    const fallbackSeries = chartResults.find(item => item?.success && Array.isArray(item.chart_data) && item.chart_data.length > 0);
-                    if (fallbackSeries) {
-                        primaryLabels = fallbackSeries.chart_data.map(item => {
-                            if (currentActiveTab === 'CONSUMPTION') {
-                                return new Date(item.timestamp).toLocaleDateString([], { day: '2-digit', month: '2-digit' });
-                            }
+                if (totalUnit) totalUnit.innerText = displayUnit;
 
-                            return new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-table" style="color: #10b981; margin-right: 6px;"></i>BẢNG SẢN LƯỢNG KHAI THÁC';
+
+                activeConfigs.forEach((cfg, index) => {
+                    const gauge = gaugeInstances[cfg.id];
+                    if (gauge) {
+                        gauge.setValue(groupTotals[index] || 0);
+                    }
+                });
+
+                if (tableBody) {
+                    tableBody.innerHTML = '';
+                    if (reportRows.length === 0) {
+                        tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b;">Không có dữ liệu sản lượng cho khoảng lọc này</td></tr>`;
+                    } else {
+                        reportRows.forEach((row, index) => {
+                            const startIndex = Number(row.start_index) || 0;
+                            const endIndex = Number(row.end_index) || 0;
+                            const deltaIndex = Number(row.delta_index) || 0;
+                            tableBody.insertAdjacentHTML('beforeend', `
+                                <tr>
+                                    <td style="text-align: center;">${row.stt || index + 1}</td>
+                                    <td>${row.station_name || row.station_id || '-'}</td>
+                                    <td class="consumption-number-cell">${formatVietnameseNumber(startIndex)}</td>
+                                    <td class="consumption-number-cell">${formatVietnameseNumber(endIndex)}</td>
+                                    <td class="consumption-number-cell" style="font-weight: 700; color: #0f766e;">${formatVietnameseNumber(deltaIndex)}</td>
+                                </tr>`);
                         });
                     }
                 }
-                hChart.data.labels = primaryLabels;
-                hChart.update();
-                updateChartVisibility();
+
+                if (totalValue) {
+                    totalValue.innerText = formatVietnameseNumber(reportResult.total_delta_volume);
+                }
+            } else {
+                const gaugeBaseUrl = `/api/kpi/flow-summary?tag_key=flow&interval_mins=30&station_ids=`;
+                const chartBaseUrl = `/api/kpi/flow-summary?tag_key=flow&interval_mins=30&start_time=${encodeURIComponent(start_time)}&end_time=${encodeURIComponent(end_time)}&station_ids=`;
+                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-line" style="color: #10b981; margin-right: 6px;"></i>BIỂU ĐỒ LƯU LƯỢNG(m³/h)';
+
+                const gaugeFetchPromises = activeConfigs.map(cfg => fetch(gaugeBaseUrl + cfg.stationIds).then(res => res.json()));
+                const chartFetchPromises = activeConfigs.map(cfg => fetch(chartBaseUrl + cfg.stationIds).then(res => res.json()));
+                const [gaugeResults, chartResults] = await Promise.all([
+                    Promise.all(gaugeFetchPromises),
+                    Promise.all(chartFetchPromises)
+                ]);
+                let primaryLabels = [];
+
+                gaugeResults.forEach((data, index) => {
+                    const cfg = activeConfigs[index];
+                    if (data.success && gaugeInstances[cfg.id]) {
+                        gaugeInstances[cfg.id].setValue(data.total_instant_flow || 0);
+                    }
+                });
+
+                chartResults.forEach((data, index) => {
+                    const cfg = activeConfigs[index];
+                    if (!data.success || !hChart || !hChart.data.datasets[index]) return;
+
+                    const chartData = Array.isArray(data.chart_data) ? data.chart_data : [];
+
+                    if (!primaryLabels.length && chartData.length > 0) {
+                        primaryLabels = chartData.map(item => formatLocalChartTime(item.timestamp));
+                    }
+
+                    hChart.data.datasets[index].label = `${cfg.title} (Tức thời m³/h)`;
+                    hChart.data.datasets[index].data = chartData.map(item => Number(item.value) || 0);
+                });
+
+                if (hChart) {
+                    if (!primaryLabels.length) {
+                        const fallbackSeries = chartResults.find(item => item?.success && Array.isArray(item.chart_data) && item.chart_data.length > 0);
+                        if (fallbackSeries) {
+                            primaryLabels = fallbackSeries.chart_data.map(item => formatLocalChartTime(item.timestamp));
+                        }
+                    }
+                    hChart.data.labels = primaryLabels;
+                    hChart.update();
+                    updateChartVisibility();
+                }
             }
 
             // --- SYNC ĐỒNG BỘ BẢNG BÁO LỖI ---
