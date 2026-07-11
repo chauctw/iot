@@ -294,6 +294,7 @@ exports.getStationIndexReport = async (req, res) => {
           row_last,
           CASE 
             WHEN prev_val IS NULL THEN 0
+            WHEN val >= prev_val AND (val - prev_val) > 2000 THEN 0
             WHEN val >= prev_val THEN val - prev_val
             WHEN val < prev_val AND val < 100 THEN val 
             ELSE 0 

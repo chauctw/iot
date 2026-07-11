@@ -143,9 +143,9 @@
         <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
             <h2 style="margin:0; color:#1e293b; font-size: 1.2rem;">TỔNG QUAN CÁC CHỈ SỐ KPI</h2>
             <div class="tab-bar-container">
+                <button class="tab-btn active" id="tabConsumptionBtn">SẢN LƯỢNG</button>
                 <button class="tab-btn" id="tabMonreBtn">LƯU LƯỢNG-BTNMT</button>
-                <button class="tab-btn active" id="tabRealtimeBtn">LƯU LƯỢNG-WEB</button>
-                <button class="tab-btn" id="tabConsumptionBtn">SẢN LƯỢNG</button>
+                <button class="tab-btn" id="tabRealtimeBtn">LƯU LƯỢNG-WEB</button>                
             </div>
         </div>
         <div>
@@ -254,26 +254,26 @@
 <script>
 (() => {
     const GAUGE_CONFIGS = [
-        { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 2000, stationIds: "monre_35_clnqt4,monre_35_g1,monre_35_g12,monre_35_g15,monre_35_g18,monre_35_g2,monre_35_g20,monre_35_g22,monre_35_g23,monre_35_g24,monre_35_g25,monre_35_g27,monre_35_g4,monre_35_qt3,monre_35_qt4,monre_35_qt5,monre_36_clngs4nm2,monre_36_gs1nm2,monre_36_gs2nm2,monre_36_gs3nm2,monre_36_gs4nm2,monre_36_qt1nm2,monre_36_qt2nm2,monre_391_g21,monre_391_g26,monre_391_qt2m,monre_393_clngs5nm1,monre_393_gs1nm1,monre_393_gs2nm1,monre_393_gs3nm1,monre_393_gs4nm1,monre_393_gs5nm1,monre_393_qt1nm1,monre_393_qt2nm1,mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,scada_tb1,tva_tb16" },
-        { id: "gauge2", title: "GP35", color: "#10b981", max: 2000, stationIds: "monre_35_clnqt4,monre_35_g1,monre_35_g12,monre_35_g15,monre_35_g18,monre_35_g2,monre_35_g20,monre_35_g22,monre_35_g23,monre_35_g24,monre_35_g25,monre_35_g27,monre_35_g4,monre_35_qt3,monre_35_qt4,monre_35_qt5" },
-        { id: "gauge3", title: "GP36", color: "#f59e0b", max: 2000, stationIds: "monre_36_clngs4nm2,monre_36_gs1nm2,monre_36_gs2nm2,monre_36_gs3nm2,monre_36_gs4nm2,monre_36_qt1nm2,monre_36_qt2nm2" },
-        { id: "gauge4", title: "GP391", color: "#6366f1", max: 1000, stationIds: "monre_391_g21,monre_391_g26,monre_391_qt2m" },
-        { id: "gauge5", title: "GP393", color: "#ec4899", max: 1000, stationIds: "monre_393_clngs5nm1,monre_393_gs1nm1,monre_393_gs2nm1,monre_393_gs3nm1,monre_393_gs4nm1,monre_393_gs5nm1,monre_393_qt1nm1,monre_393_qt2nm1" },
-        { id: "gauge6", title: "KHÁC", color: "#14b8a6", max: 1000, stationIds: "mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,scada_tb1,tva_tb16" }
+        { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 50000, stationIds: "monre_35_clnqt4,monre_35_g1,monre_35_g12,monre_35_g15,monre_35_g18,monre_35_g2,monre_35_g20,monre_35_g22,monre_35_g23,monre_35_g24,monre_35_g25,monre_35_g27,monre_35_g4,monre_35_qt3,monre_35_qt4,monre_35_qt5,monre_36_clngs4nm2,monre_36_gs1nm2,monre_36_gs2nm2,monre_36_gs3nm2,monre_36_gs4nm2,monre_36_qt1nm2,monre_36_qt2nm2,monre_391_g21,monre_391_g26,monre_391_qt2m,monre_393_clngs5nm1,monre_393_gs1nm1,monre_393_gs2nm1,monre_393_gs3nm1,monre_393_gs4nm1,monre_393_gs5nm1,monre_393_qt1nm1,monre_393_qt2nm1,mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,scada_tb1,tva_tb16" },
+        { id: "gauge2", title: "GP35", color: "#10b981", max: 20000, stationIds: "monre_35_clnqt4,monre_35_g1,monre_35_g12,monre_35_g15,monre_35_g18,monre_35_g2,monre_35_g20,monre_35_g22,monre_35_g23,monre_35_g24,monre_35_g25,monre_35_g27,monre_35_g4,monre_35_qt3,monre_35_qt4,monre_35_qt5" },
+        { id: "gauge3", title: "GP36", color: "#f59e0b", max: 20000, stationIds: "monre_36_clngs4nm2,monre_36_gs1nm2,monre_36_gs2nm2,monre_36_gs3nm2,monre_36_gs4nm2,monre_36_qt1nm2,monre_36_qt2nm2" },
+        { id: "gauge4", title: "GP391", color: "#6366f1", max: 10000, stationIds: "monre_391_g21,monre_391_g26,monre_391_qt2m" },
+        { id: "gauge5", title: "GP393", color: "#ec4899", max: 10000, stationIds: "monre_393_clngs5nm1,monre_393_gs1nm1,monre_393_gs2nm1,monre_393_gs3nm1,monre_393_gs4nm1,monre_393_gs5nm1,monre_393_qt1nm1,monre_393_qt2nm1" },
+        { id: "gauge6", title: "KHÁC", color: "#14b8a6", max: 10000, stationIds: "mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,scada_tb1,tva_tb16" }
     ];
 
     const GAUGE_CONFIGS_REALTIME = [
-        { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 2000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5,scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2,tva_tb21,tva_tb26,mqtt_qt2,scada_gs5nm1,tva_gs1nm1,mqtt_gs2nm1,tva_gs3nm1,scada_gs4nm1,tva_qt1nm1,tva_qt2nm1,mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,tva_tb16" },
-        { id: "gauge2", title: "GP35", color: "#10b981", max: 2000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5" },
-        { id: "gauge3", title: "GP36", color: "#f59e0b", max: 2000, stationIds: "scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2" },
-        { id: "gauge4", title: "GP391", color: "#6366f1", max: 1000, stationIds: "tva_tb21,tva_tb26,mqtt_qt2" },
-        { id: "gauge5", title: "GP393", color: "#ec4899", max: 1000, stationIds: "scada_gs5nm1,tva_gs1nm1,mqtt_gs2nm1,tva_gs3nm1,scada_gs4nm1,tva_qt1nm1,tva_qt2nm1" },
-        { id: "gauge6", title: "KHÁC", color: "#14b8a6", max: 1000, stationIds: "mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,tva_tb16" }
+        { id: "gauge1", title: "TOTAL", color: "#2563eb", max: 50000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5,scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2,tva_tb21,tva_tb26,mqtt_qt2,scada_gs5nm1,tva_gs1nm1,mqtt_gs2nm1,tva_gs3nm1,scada_gs4nm1,tva_qt1nm1,tva_qt2nm1,mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,tva_tb16" },
+        { id: "gauge2", title: "GP35", color: "#10b981", max: 20000, stationIds: "scada_tb24,scada_tb1,tva_tb12,mqtt_g15,mqtt_g18,tva_tb2,tva_tb20,tva_tb22,tva_tb23,tva_tb24,tva_tb25,tva_tb27,tva_tb4,tva_qt3,mqtt_qt4,mqtt_qt5" },
+        { id: "gauge3", title: "GP36", color: "#f59e0b", max: 20000, stationIds: "scada_gs4nm2,mqtt_gs1nm2,tva_gs2nm2,tva_gs3nm2,mqtt_qt1nm2,mqtt_qt2nm2" },
+        { id: "gauge4", title: "GP391", color: "#6366f1", max: 10000, stationIds: "tva_tb21,tva_tb26,mqtt_qt2" },
+        { id: "gauge5", title: "GP393", color: "#ec4899", max: 10000, stationIds: "scada_gs5nm1,tva_gs1nm1,mqtt_gs2nm1,tva_gs3nm1,scada_gs4nm1,tva_qt1nm1,tva_qt2nm1" },
+        { id: "gauge6", title: "KHÁC", color: "#14b8a6", max: 10000, stationIds: "mqtt_g29a,mqtt_g30a,mqtt_g31b,mqtt_gtacvan,tva_tb16" }
     ];    
 
     const CHART_COLORS = ['rgb(37, 99, 235)', 'rgb(16, 185, 129)', 'rgb(245, 158, 11)', 'rgb(99, 102, 241)', 'rgb(236, 72, 153)', 'rgb(20, 184, 166)'];
 
-    let currentActiveTab = 'REALTIME';
+    let currentActiveTab = 'CONSUMPTION';
     let gaugeInstances = {};
     let hChart = null;
     let selectedKpiGroups = [];
